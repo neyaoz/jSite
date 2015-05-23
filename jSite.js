@@ -61,16 +61,19 @@
         };
 
 
-    jSite.fn.init = function(cluster) {
+    jSite.fn.init = function() {
         var that = this;
         var pushStack;
 
-        jSite.each(cluster, pushStack = function(i, element) {
-            if (jSite.isArrayLike(element)) {
-                return jSite.each(element, pushStack);
+        jSite.each(arguments, pushStack = function(i, element) {
+            if (jSite.isString(element)) {
+                element = document.querySelectorAll(element);
             }
             if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
                 that.push(element);
+            }
+            if (jSite.isArrayLike(element)) {
+                return jSite.each(element, pushStack);
             }
         });
 
@@ -262,21 +265,24 @@
 
             return obj;
         },
-        getData: function(path, obj) {
+        getData: function(obj, path) {
             /*
             todo path arada hata veriyor obje olarak gelip, tespit edilmeli.
              */
             if (jSite.type(path) === 'null')
                 return obj;
 
-            if (!jSite.isArray(path))
+            if (jSite.isString(path))
                 path = path.split('.');
+
+            if (!jSite.isArray(path))
+                path = [path];
 
             if (obj.hasOwnProperty(path[0])) {
                 obj = obj[path.shift()];
 
                 if (path.length) {
-                    obj = jSite.getData(path, obj);
+                    obj = jSite.getData(obj, path);
                 }
 
                 return obj;
