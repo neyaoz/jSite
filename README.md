@@ -96,20 +96,30 @@ jSite.invertKeys(obj); // => {bar: 'foo'}
 ```
 
 
-##### getOnly(obj, keys, except) => obj|obj[keys]
-Objedeki sadece belirtilen anahtara ait değerler döndürülür. keys argümanı array ile belirtilmemişse değer tek başına döner. except argümanı **true** olarak belirtilirse, keys argümanı ile belirtilenler dışındakiler dönderilir.
+##### parseData(obj)
+Girilen objenin veri tipine uygun olarak dönülmesini sağlar. Bu metotla yalın JSON verisi de işlenilebilmektedir.
 
 ```JS
-var obj = {
-  foo: 'x',
-  bar: 'y'
-}
+jSite.parseData('true'); // => true
+jSite.parseData('null'); // => null
 
-jSite.getOnly(obj, foo); // => 'x'
-jSite.getOnly(obj, foo, true); // => { bar: 'y' }
+jSite.parseData(); // => undefined
+jSite.parseData(undefined); // => undefined
 
-jSite.getOnly(obj, [foo]); // => { foo: 'x' }
-jSite.getOnly(obj, [foo], true); // => { bar: 'y' }
+jSite.parseData('32'); // => 32
+jSite.parseData('32.32'); // => 32.32
+jSite.parseData('1e+32'); // => 1e+32
+
+jSite.parseData('{"foo":"bar"}'); // { foo: 'bar' }
+```
+
+
+##### setData(path, value)
+Nokta notasyonu aracılığıyla obje oluşturulup son anahtara değer atanabilmesini sağlar.
+
+```JS
+jSite.setData("foo", true); // => { foo: true }
+jSite.setData("foo.bar", true); // => { foo: { bar: true } }
 ```
 
 
@@ -131,26 +141,21 @@ jSite.getData(obj, "3.foo.bar"); // => true
 ```
 
 
-##### parseData(obj)
-Girilen objenin veri tipine uygun olarak dönülmesini sağlar. Bu metotla yalın JSON verisi de işlenilebilmektedir.
+##### getOnly(obj, keys, except) => obj|obj[keys]
+Objedeki sadece belirtilen anahtara ait değerler döndürülür. keys argümanı array ile belirtilmemişse değer tek başına döner. except argümanı **true** olarak belirtilirse, keys argümanı ile belirtilenler dışındakiler dönderilir.
 
 ```JS
-jSite.parseData('true'); // => true
-jSite.parseData('null'); // => null
+var obj = {
+  foo: 'x',
+  bar: 'y'
+}
 
-jSite.parseData(); // => undefined
-jSite.parseData(undefined); // => undefined
+jSite.getOnly(obj, foo); // => 'x'
+jSite.getOnly(obj, foo, true); // => { bar: 'y' }
 
-jSite.parseData('32'); // => 32
-jSite.parseData('32.32'); // => 32.32
-jSite.parseData('1e+32'); // => 1e+32
-
-jSite.parseData('{"foo":"bar"}'); // { foo: 'bar' }
+jSite.getOnly(obj, [foo]); // => { foo: 'x' }
+jSite.getOnly(obj, [foo], true); // => { bar: 'y' }
 ```
-
-
-##### snakeCase(str)
-Girilen dizgeyi snake case formatında dönderir.
 
 
 ##### camelCase(str)
@@ -288,6 +293,37 @@ jSite('tag').options('foo', true); // => { bar: 'y' }
 
 jSite('tag').options(['foo']); // => { foo: 'x' }
 jSite('tag').options(['foo'], true); // => { bar: 'y' }
+```
+
+
+```HTML
+<tag
+  option-foo-bar="1"
+  option-foo--bar="2"
+  option-foo---bar="3"
+  option-foo.bar="4"
+  option-foo.baz="5"
+
+  option-qux="6"
+  option--qux="7"
+></tag>
+```
+
+```JS
+jSite('tag').options(); // =>
+/*
+  {
+    'fooBar': 1,
+    'foo-bar': 2,
+    'foo-Bar': 3,
+    'foo': {
+      'bar': 4,
+      'baz': 5
+    },
+    'qux': 6,
+    'Qux': 7
+  }
+*/
 ```
 
 

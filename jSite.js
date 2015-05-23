@@ -214,7 +214,7 @@
         },
         isArray: Array.isArray,
         inArray: function(obj, key) {
-            return jSite.isArray(obj) && obj.indexOf(+key) !== -1;
+            return jSite.isArray(obj) && obj.indexOf(key) !== -1;
         },
         isArrayLike: function(obj) {
             if (!obj || typeof obj !== 'object') return false;
@@ -263,29 +263,37 @@
 
             return obj;
         },
-        getData: function(obj, path) {
-            /*
-            todo path arada hata veriyor obje olarak gelip, tespit edilmeli.
-             */
-            if (jSite.type(path) === 'null')
-                return obj;
-
-            if (jSite.isString(path))
+        setData: function(path, value) {
+            if (jSite.isString(path)) {
                 path = path.split('.');
+            }
 
-            if (!jSite.isArray(path))
-                path = [path];
+            var target = obj = {};
+            for (var i = 0; i < path.length; i++) {
+                obj = (obj[path[i]] = i === path.length-1 ? value : {});
+            }
 
-            if (obj.hasOwnProperty(path[0])) {
-                obj = obj[path.shift()];
-
-                if (path.length) {
-                    obj = jSite.getData(obj, path);
-                }
-
+            return target;
+        },
+        getData: function(obj, path) {
+            if (jSite.type(path) === 'null') {
                 return obj;
             }
-            return null;
+
+            if (jSite.isString(path)) {
+                path = path.split('.');
+            }
+
+            for (var i = 0; i < path.length; i++) {
+                if (obj.hasOwnProperty(i)) {
+                    obj = obj[path[i]];
+                    continue;
+                }
+                obj = void 0;
+                break;
+            }
+
+            return obj;
         },
         getOnly: function(obj, keys, except) {
             if (!jSite.isDefined(keys)) {
@@ -322,61 +330,28 @@
 
             return target;
         },
-        camelCase: function(obj, upperFirst) {
-            // todo refactoring yapilacak
-            if (typeof obj === 'object') {
-                for(var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        obj[jSite.snakeCase(i)] = typeof obj[i] === 'object' ? jSite.snakeCase(obj[i]) : obj[i];
-                        i != jSite.snakeCase(i) && delete obj[i];
-                    }
+        camelCase: function(str) {
+            return str.replace(/(--)|(?:-)([a-z])/g, function(match, $1, $2) {
+                if (jSite.isDefined($1)) {
+                    return '-';
                 }
-            }
-            if (typeof obj === 'string') {
-                obj = jSite.snakeCase(obj).replace(/(?:_)([a-z])/g, function(match, char) {
-                    return char.toUpperCase();
-                });
-
-                if (upperFirst) {
-                    obj = obj.charAt(0).toUpperCase() + obj.slice(1);
-                }
-            }
-
-            return obj;
-        },
-        snakeCase: function(obj) {
-            // todo refactoring yapilacak
-            if (typeof obj === 'object') {
-                for(var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        obj[jSite.snakeCase(i)] = typeof obj[i] === 'object' ? jSite.snakeCase(obj[i]) : obj[i];
-                        i != jSite.snakeCase(i) && delete obj[i];
-                    }
-                }
-            }
-            if (typeof obj === 'string') {
-                obj = obj.replace(/[\s-]+|(\B[A-Z])/g, '_$1').toLowerCase()
-            }
-
-            return obj;
+                return $2.toUpperCase();
+            });
         }
     });
 
 
     jSite.fn.extend({
         options: function(only, except) {
-            /*
-             todo "-" to camelCase, "_" to snake_case, "." to notation destegi eklenecek. (otomatik)
-             */
             var options = {};
 
             jSite.each(this.get(0).attributes, function(i, attribute, match) {
-                if (match = attribute.name.match(/^option-([-a-zA-Z0-9_:.]+)/)) {
-                    options[jSite.camelCase(match[1])] = jSite.parseData(attribute.value);
+                if (match = attribute.name.match(/^option-([_.:-a-z0-9]+)/i)) {
+                    jSite.extend(true, options, jSite.setData(jSite.camelCase(match[1]), jSite.parseData(attribute.value)));
                 }
             });
 
-            return only ? jSite.getOnly(options, only, except) : options;
+            return jSite.getOnly(options, only, except);
         }
     });
 
