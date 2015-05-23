@@ -1,0 +1,16 @@
+{
+  "name": "jSite",
+  "version": "0.1.0-alpha.1",
+  "description": "",
+  "main": "jSite.js",
+  "authors": [
+    "@rephole"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    ".DS_Store",
+    ".idea",
+    ".dev"
+  ]
+}
