@@ -337,20 +337,44 @@ jSite('tag').options(); // =>
 #### DOM Fonksiyonlarını Genişletme
 DOM fonksiyonlarını jSite.fn.extend() ile genişletebilirsiniz.
 
+###### Örnek 1:
 ```JS
-  jSite.fn.extend({
-    'changeID': function(id) {
-      return this.each(function(index, element, instance) {
-        element.id = id;
-      });
-     }
-  });
+jSite.fn.extend({
+  'changeID': function(id) {
+    return this.each(function(index, element, instance) {
+      element.id = id;
+    });
+   }
+});
 ```
 
 Yaptığınız bu tanımlama ile oluşan **changeID** DOM fonksiyonunu dilediğiniz element ile kullanabilirsiniz.
 
 ```JS
-  jSite('bar#foo').changeID('new'); // => <bar id="new">
+  jSite('bar#example').changeID('new'); // => <bar id="example">
+```
+
+
+###### Örnek 2:
+```JS
+jSite.fn.extend({
+  'autoSlider': function() {
+    return this.each(function(index, element, instance) {
+      $(this).slider(jSite(this).options());
+    });
+   }
+});
+```
+
+Yaptığınız bu tanımlama ile oluşan **autoSlider*** DOM fonksiyonunu kullanarak, jQuery UI Slider aracının elementin niteliklerinde belirtilen ayarlar ile çağırılmasını sağlayabilirsiniz.
+
+```JS
+jSite('div.example').autoSlider();
+```
+
+
+```HTML
+<div class="example" option-min="1" option-max="9"></div>
 ```
 
 -
