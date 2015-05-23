@@ -154,26 +154,23 @@
         error: function(message) {
             throw new Error(message);
         },
-        merge: function(first, second) {
-            var len = +second.length,
-                j = 0,
-                i = first.length;
-
-            for ( ; j < len; j++ ) {
-                first[ i++ ] = second[ j ];
-            }
-
-            first.length = i;
-
-            return first;
+        merge: function() {
+            var target = arguments[0] || [];
+            jSite.each([].slice.call(arguments, 1), function(i, obj, arguments) {
+                if (jSite.isArrayLike(obj)) {
+                    for (var j = 0; j < obj.length; j++) {
+                        [].push.call(target, obj[j]);
+                    }
+                }
+            });
+            return target;
         },
         each: function(obj, callback, args) {
             var i;
             if (jSite.isArrayLike(obj)) {
                 for (i = 0; i < obj.length; i++)
-                    if (obj.hasOwnProperty(i))
-                        if (callback.apply(obj[i], args || [i, obj[i], obj]) === false)
-                            break;
+                    if (callback.apply(obj[i], args || [i, obj[i], obj]) === false)
+                        break;
             } else {
                 for (i in obj)
                     if (obj.hasOwnProperty(i))
@@ -181,6 +178,7 @@
                             break;
             }
 
+            // TODO results[] support will be added
             return obj;
         }
     });
@@ -480,29 +478,3 @@
 
     return jSite;
 }));
-
-
-(function(j) {
-    jSite.md.extend({
-        test: {
-            init: function() {
-                this.classe = function() {
-                    this.length = 0;
-                };
-                this.classe.prototype.add = function() {
-                    return ++this.length;
-                };
-
-                this.ok = 0;
-
-                return this;
-            },
-            bind: function() {
-                this.module.ok++;
-
-                this.ok = this.ok || 0;
-                this.ok++;
-            }
-        }
-    });
-})(jSite);

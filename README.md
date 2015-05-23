@@ -64,8 +64,8 @@ return obj1 // => { foo: true }
 ```
 
 
-##### merge(alo1, alo2) => alo1
-İlk dizi benzeri objenin üzerine ikinci dizi benzeri objeyi yazar ve ilk objeyi dönderir.
+##### merge(target[, obj1][, obj2][, objN]) => target
+İlk dizi benzeri objenin üzerine ikinci dizi benzeri objeyi ekler ve ilk objeyi dönderir.
 
 ```JS
 jSite.merge(['a', 'b', 'c'], ['x', 'y', 'z']); // => ['a', 'b', 'c', 'x', 'y', 'z']
@@ -151,6 +151,7 @@ jSite.parseData('{"foo":"bar"}'); // { foo: 'bar' }
 
 ##### snakeCase(str)
 Girilen dizgeyi snake case formatında dönderir.
+
 
 ##### camelCase(str)
 Girilen dizgeyi camel case formatında dönderir.
@@ -239,7 +240,7 @@ Yaptığınız bu tanımlama ile örnek olarak oluşan **log** yardımcı metodu
 DOM fonksiyonları, jSite örneği aracılığıyla çağırılan ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır.
 
 ```JS
-jSite(document.body).each(function(index, element, instance) {
+jSite('body').each(function(index, element, instance) {
   console.log(jSite(this).options())
 });
 ```
@@ -296,8 +297,10 @@ DOM fonksiyonlarını jSite.fn.extend() ile genişletebilirsiniz.
 ```JS
   jSite.fn.extend({
     'changeID': function(id) {
-      this.id = id;
-    }
+      return this.each(function(index, element, instance) {
+        element.id = id;
+      });
+     }
   });
 ```
 
