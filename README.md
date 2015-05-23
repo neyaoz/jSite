@@ -39,6 +39,8 @@ jSite.error('undefined is not a function');
 
 Objeler argüman sırasıyla birleştirilir ve çok katmanlı birleştirme yapılmak istenildiğinde ilk argümanın öncesine **true** eklenebilir. Çok katmanlı birleştirme sadece ilk iki seçenekte kullanılabilir.
 
+
+###### Örnek 1:
 ```JS
 var obj1 = {
   foo: true
@@ -51,6 +53,8 @@ $.extend(obj1, obj2); // => {foo: true, bar: true}
 return obj1; // => {foo: true, bar: true}
 ```
 
+
+###### Örnek 2:
 ```JS
 var obj1 = {
   foo: true
@@ -282,6 +286,8 @@ return array; // => ['0:head', '1:body', '2:bar', '3:bar']
 ##### options(only, except) => (mixed)
 Kümedeki ilk elemanın option niteliklerini dönderir.
 
+
+###### Örnek 1:
 ```HTML
 <tag option-foo="x" option-bar="y">
 ```
@@ -296,6 +302,7 @@ jSite('tag').options(['foo'], true); // => { bar: 'y' }
 ```
 
 
+###### Örnek 2:
 ```HTML
 <tag
   option-foo-bar="1"
