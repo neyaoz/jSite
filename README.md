@@ -216,7 +216,7 @@ Girilen verinin tanımlı mı olduğunu kontrol eder.
 Girilen verinin tanımsız mı olduğunu kontrol eder.
 
 
-#### Metotları Genişletme
+#### Yardımcı Metotları Genişletme
 Yardımcı metotları jSite.extend() ile genişletebilirsiniz.
 
 ```JS
@@ -236,7 +236,76 @@ Yaptığınız bu tanımlama ile örnek olarak oluşan **log** yardımcı metodu
 -
 
 ### DOM Fonksiyonları
-...
+DOM fonksiyonları, jSite örneği aracılığıyla çağırılan ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır.
+
+```JS
+jSite(document.body).each(function(index, element, instance) {
+  console.log(jSite(this).options())
+});
+```
+
+DOM elementleri farklı şekillerde kümelenebilir.
+
+```JS
+jSite(document); // => [document]
+jSite(document.body); // => [<body>]
+jSite(document.getElementById('foo')); // => [<bar id="foo">]
+jSite(document.getElementsByTagName('bar')); // => [<bar id="foo">, <bar id="noo">]
+jSite(document.querySelectorAll('bar#foo')); // => [<bar id="foo">]
+jSite(document, document.head, document.body); // => [document, <head>, <body>]
+jSite(document, 'head', 'body', 'bar'); // => [document, <head>, <body>, <bar>]
+```
+
+
+#### Öntanımlı DOM Fonksiyonları
+
+
+##### each(callback(index, element, instance)) => instance
+Kümedeki her elemente geri çağırımı uygular. Geri çağırım **false** döndüğü takdirde döngü sonlandırılır.
+
+```JS
+var array = [];
+jSite('head', 'body', 'bar').each(function(index, value, instance) {
+  array.push(index + ':'  + this.tagName);
+}); // => [<head>, <body>, <bar>, <bar#foo>]
+
+return array; // => ['0:head', '1:body', '2:bar', '3:bar']
+```
+
+
+##### options(only, except) => (mixed)
+Kümedeki ilk elemanın option niteliklerini dönderir.
+
+```HTML
+<tag option-foo="x" option-bar="y">
+```
+
+```JS
+jSite('tag').options(); // => { foo: 'y', bar: 'y' }
+jSite('tag').options('foo'); // => 'x'
+jSite('tag').options('foo', true); // => { bar: 'y' }
+
+jSite('tag').options(['foo']); // => { foo: 'x' }
+jSite('tag').options(['foo'], true); // => { bar: 'y' }
+```
+
+
+#### DOM Fonksiyonlarını Genişletme
+DOM fonksiyonlarını jSite.fn.extend() ile genişletebilirsiniz.
+
+```JS
+  jSite.fn.extend({
+    'changeID': function(id) {
+      this.id = id;
+    }
+  });
+```
+
+Yaptığınız bu tanımlama ile oluşan **changeID** DOM fonksiyonunu dilediğiniz element ile kullanabilirsiniz.
+
+```JS
+  jSite('bar#foo').changeID('new'); // => <bar id="new">
+```
 
 -
 
