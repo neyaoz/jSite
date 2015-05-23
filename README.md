@@ -149,12 +149,11 @@ jSite.parseData('{"foo":"bar"}'); // { foo: 'bar' }
 ```
 
 
-##### snakeCase
-...
+##### snakeCase(str)
+Girilen dizgeyi snake case formatında dönderir.
 
-
-##### camelCase
-...
+##### camelCase(str)
+Girilen dizgeyi camel case formatında dönderir.
 
 
 ##### type(obj)
@@ -228,16 +227,18 @@ Yardımcı metotları jSite.extend() ile genişletebilirsiniz.
   })
 ```
 
-Yaptığınız bu tanımlama ile örnek olarak oluşturduğunuz **log** yardımcı metodunu dilediğiniz yerde kullanabilirsiniz.
+Yaptığınız bu tanımlama ile örnek olarak oluşan **log** yardımcı metodunu dilediğiniz yerde kullanabilirsiniz.
 
 ```JS
   jSite.log('it is logged!')
 ```
 
+-
 
 ### DOM Fonksiyonları
 ...
 
+-
 
 ### DOM Modülleri
 ...
