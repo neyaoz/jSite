@@ -390,20 +390,21 @@ DOM metotlarını jSite.md.extend() ile genişletebilirsiniz.
 ###### Örnek 1:
 ```JS
 jSite.md.extend({
-    random: {
-        init: function() {
-            this.generate = function(options) {
-                var min = options.min || 0;
-                var max = options.max || 100;
-                return Math.floor(Math.random() * (max - min)) + min
-            };
+  random: {
+    init: function() {
+      this.generate = function(options) {
+        var min = options.min || 0;
+        var max = options.max || 100;
+        return Math.floor(Math.random() * (max - min)) + min
+      };
 
-            return this;
-        },
-        bind: function() {
-            this.node.innerHTML = this.module.generate(jSite(this.node).options(['min', 'max']))
-        }
+      return this;
+    },
+    bind: function(options) {
+      options = options || jSite(this.node).options(['min', 'max']);
+      this.node.innerHTML = this.module.generate(options)
     }
+  }
 });
 ```
 
@@ -422,4 +423,11 @@ veya
 ```
 ```HTML
   <foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
+```
+veya
+```JS
+  jSite('foo#bar').md('random', { min: 10, max: 99 });
+```
+```HTML
+  <foo id="bar"></foo> <!-- => 14 -->
 ```
