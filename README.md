@@ -2,6 +2,10 @@ jSite
 =====
 jSite, DOM elementleri ile javascript modülleri arasında köprü görevi gören ve otomatik initalize imkanı sağlayan bir eklentidir. Bu sayede popüler javascript kütüphaneleri ile yazılan eklentileri jSite'a entegre ettikten sonra tek satır javascript yazmadan ve her seferinde farklı opsiyonlarla dilediğiniz elemente bağlayabilirsiniz. Ayrıca içerdiği yardımcı metotlarla sık kullandığınız işlevleri gerçekleştirebilirsiniz. Gerekli olduğu durumlarda kendinize özel yardımcı metotlar tanımlayabilir ve jSite'ı genişletebilirsiniz.
 
+```shell
+bower install jsite
+```
+
 ---
 
 ## Özellikler
@@ -230,17 +234,17 @@ Girilen verinin tanımsız mı olduğunu kontrol eder.
 Yardımcı metotları jSite.extend() ile genişletebilirsiniz.
 
 ```JS
-  jSite.extend({
-    'log': function(obj) {
-      console.log(obj)
-    }
-  })
+jSite.extend({
+  'log': function(obj) {
+    console.log(obj)
+  }
+})
 ```
 
 Yaptığınız bu tanımlama ile örnek olarak oluşan **log** yardımcı metodunu dilediğiniz yerde kullanabilirsiniz.
 
 ```JS
-  jSite.log('it is logged!')
+jSite.log('it is logged!')
 ```
 
 -
@@ -351,7 +355,7 @@ jSite.fn.extend({
 Yaptığınız bu tanımlama ile oluşan **changeID** DOM fonksiyonunu dilediğiniz element ile kullanabilirsiniz.
 
 ```JS
-  jSite('bar#example').changeID('new'); // => <bar id="example">
+jSite('bar#example').changeID('new'); // => <bar id="example">
 ```
 
 
@@ -419,15 +423,15 @@ veya
 ````
 veya
 ```JS
-  jSite('foo#bar').md('random');
+jSite('foo#bar').md('random');
 ```
 ```HTML
-  <foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
+<foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
 ```
 veya
 ```JS
-  jSite('foo#bar').md('random', { min: 10, max: 99 });
+jSite('foo#bar').md('random', { min: 10, max: 99 });
 ```
 ```HTML
-  <foo id="bar"></foo> <!-- => 14 -->
+<foo id="bar"></foo> <!-- => 14 -->
 ```
