@@ -418,7 +418,7 @@ veya
 ````
 veya
 ```JS
-  jSite('foo#bar'random');
+  jSite('foo#bar').md('random');
 ```
 ```HTML
   <foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
