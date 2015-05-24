@@ -72,8 +72,11 @@
             if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
                 that.push(element);
             }
+            if (jSite.isFunction(element)) {
+                jSite.ready(element);
+            }
             if (jSite.isArrayLike(element)) {
-                return jSite.each(element, pushStack);
+                jSite.each(element, pushStack);
             }
         });
 
@@ -148,6 +151,46 @@
             // Return the modified object
             return target;
         };
+
+
+    jSite.extend({
+        isReady: false,
+        ready: function(callback) {
+            if (jSite.isReady) {
+                callback.call(window, jSite);
+            } else {
+                jSite.ready.items = jSite.ready.items || [];
+                jSite.ready.items.push(callback);
+                jSite.ready.check();
+            }
+        }
+    });
+    jSite.ready.start = function() {
+        if (jSite.isReady !== true) {
+            jSite.isReady   = true;
+            jSite.each(jSite.ready.items, function() {
+                this.call(window, jSite);
+            });
+        }
+    };
+    jSite.ready.check = function(handle) {
+        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+            jSite.ready.start();
+        } else if (handle) {
+            if (document.addEventListener) {
+                document.addEventListener("DOMContentLoaded", jSite.ready.start, false);
+                window.addEventListener("load", jSite.ready.start, false);
+            } else {
+                document.attachEvent("onreadystatechange", function() {
+                    if (document.readyState === "complete") {
+                        jSite.ready.start();
+                    }
+                });
+                window.attachEvent("onload", jSite.ready.start);
+            }
+        }
+    };
+    jSite.ready.check(true);
 
 
     jSite.extend({
@@ -360,24 +403,19 @@
         md: {
             extend: jSite.extend,
 
-            run: function() {
-                // auto init
-                jSite.each(jSite.md, function(name, module) {
-                    if (jSite.isPlainObject(module) && jSite.isFunction(module.init))
-                        jSite.md.init(name);
-                });
+            load: function() {
+                jSite.ready(function() {
+                    // auto init
+                    jSite.each(jSite.md, function(name, module) {
+                        if (jSite.isPlainObject(module) && jSite.isFunction(module.init))
+                            jSite.md.init(name);
+                    });
 
-                // auto bind
-                jSite.each(jSite.md, function(name, module) {
-                    if (jSite.isPlainObject(module) && jSite.isFunction(module.bind))
-                        jSite(
-                            [].concat.call(
-                                [].slice.call(document.querySelectorAll(name)),
-                                [].slice.call(document.querySelectorAll('[data-init~="' + name + '"]'))
-                            )
-                        ).each(function() {
-                            jSite.md.bind.call(this, name)
-                        });
+                    // auto bind
+                    jSite.each(jSite.md, function(name, module) {
+                        if (jSite.isPlainObject(module) && jSite.isFunction(module.bind))
+                            jSite(name, '[data-init~="' + name + '"]').md(name);
+                    });
                 });
             },
 
@@ -391,7 +429,7 @@
 
             bind: function(name) {
                 if (jSite.md.hasOwnProperty(name) && jSite.isFunction(jSite.md[name].bind)) {
-                    jSite.md[name].bind.apply({module: jSite.md[name].module || {}, node: this}, [].slice.call(arguments));
+                    jSite.md[name].bind.apply({module: jSite.md[name].module || {}, node: this}, [].slice.call(arguments, 1));
                 } else {
                     jSite.error('module does not contain a module named <' + name + '> to bind.')
                 }
@@ -403,9 +441,10 @@
         md: function(name) {
             this.each(function () {
                 jSite.md.bind.apply(this, [].slice.call(arguments));
-            })
+            }, arguments)
         }
     });
+    jSite.md.load();
 
 
     // Register as a named AMD module, since jSite can be concatenated with other
