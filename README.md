@@ -384,8 +384,8 @@ DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildi�
 
 
 
-#### DOM Metotlarını Genişletme
-DOM metotlarını jSite.md.extend() ile genişletebilirsiniz.
+#### DOM Modüllerini Genişletme
+DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
 
 ###### Örnek 1:
 ```JS
@@ -408,7 +408,7 @@ jSite.md.extend({
 });
 ```
 
-Yaptığınız bu tanımlama ile oluşan **random** DOM metotu, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
 
 ```HTML
 <random option-min="10" option-max="99"></random> <!-- => 64 -->
