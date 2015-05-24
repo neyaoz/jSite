@@ -70,14 +70,13 @@
             if (jSite.isString(element)) {
                 element = document.querySelectorAll(element);
             }
+
             if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
                 that.push(element);
-            }
-            if (jSite.isFunction(element)) {
-                jSite.ready(element);
-            }
-            if (jSite.isArrayLike(element)) {
+            } else if (jSite.isArrayLike(element)) {
                 jSite.each(element, pushStack);
+            } else if (jSite.isFunction(element)) {
+                jSite.ready(element);
             }
         });
 
