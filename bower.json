@@ -1,7 +1,6 @@
 {
   "name": "jSite",
-  "version": "0.1.0-alpha.1",
-  "description": "",
+  "version": "0.1.0-alpha",
   "main": "jSite.js",
   "authors": [
     "@rephole"

@@ -35,7 +35,7 @@
 
     jSite.fn =
         jSite.prototype = {
-            version: '0.1.0-alpha.1',
+            version: '0.1.0-alpha',
             constructor: jSite,
             context: document,
             length: 0,
