@@ -384,30 +384,31 @@ DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildi�
 
 
 
-#### DOM Metotlarını Genişletme
-DOM metotlarını jSite.md.extend() ile genişletebilirsiniz.
+#### DOM Modüllerini Genişletme
+DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
 
 ###### Örnek 1:
 ```JS
 jSite.md.extend({
-    random: {
-        init: function() {
-            this.generate = function(options) {
-                var min = options.min || 0;
-                var max = options.max || 100;
-                return Math.floor(Math.random() * (max - min)) + min
-            };
+  random: {
+    init: function() {
+      this.generate = function(options) {
+        var min = options.min || 0;
+        var max = options.max || 100;
+        return Math.floor(Math.random() * (max - min)) + min
+      };
 
-            return this;
-        },
-        bind: function() {
-            this.node.innerHTML = this.module.generate(jSite(this.node).options(['min', 'max']))
-        }
+      return this;
+    },
+    bind: function(options) {
+      options = options || jSite(this.node).options(['min', 'max']);
+      this.node.innerHTML = this.module.generate(options)
     }
+  }
 });
 ```
 
-Yaptığınız bu tanımlama ile oluşan **random** DOM metotu, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
 
 ```HTML
 <random option-min="10" option-max="99"></random> <!-- => 64 -->
@@ -418,8 +419,15 @@ veya
 ````
 veya
 ```JS
-  jSite('foo#bar'random');
+  jSite('foo#bar').md('random');
 ```
 ```HTML
   <foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
+```
+veya
+```JS
+  jSite('foo#bar').md('random', { min: 10, max: 99 });
+```
+```HTML
+  <foo id="bar"></foo> <!-- => 14 -->
 ```
