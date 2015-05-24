@@ -380,4 +380,46 @@ jSite('div.example').autoSlider();
 -
 
 ### DOM Modülleri
-...
+DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildiğinde jSite örneği aracılığıyla da çağırılabilen ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır. DOM fonksiyonlarından daha gelişmiş olan bu yapının initialize desteği vardır. Genişletilirken tanımlanan **init** metodu aracılığıyla önyükleme sırasında istenilen işlemler yapılabilir ve dönen değere **bind** metodu içinden **this** anahtarı aracılığıyla istenildiği zaman ulaşılabilir.
+
+
+
+#### DOM Metotlarını Genişletme
+DOM metotlarını jSite.md.extend() ile genişletebilirsiniz.
+
+###### Örnek 1:
+```JS
+jSite.md.extend({
+    random: {
+        init: function() {
+            this.generate = function(options) {
+                var min = options.min || 0;
+                var max = options.max || 100;
+                return Math.floor(Math.random() * (max - min)) + min
+            };
+
+            return this;
+        },
+        bind: function() {
+            this.node.innerHTML = this.module.generate(jSite(this.node).options(['min', 'max']))
+        }
+    }
+});
+```
+
+Yaptığınız bu tanımlama ile oluşan **random** DOM metotu, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+
+```HTML
+<random option-min="10" option-max="99"></random> <!-- => 64 -->
+````
+veya
+```HTML
+<div data-init="random" option-min="10" option-max="99"></random> <!-- => 58 -->  
+````
+veya
+```JS
+  jSite('foo#bar'random');
+```
+```HTML
+  <foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
+```
