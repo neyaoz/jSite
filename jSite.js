@@ -22,6 +22,7 @@
 
 // Pass this if window is not defined yet
 }(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
+    "use strict";
 
     // Define a local copy of jSite
     var jSite =
@@ -174,19 +175,19 @@
         }
     };
     jSite.ready.check = function(handle) {
-        if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+        if (document.readyState === 'complete' || (!document.attachEvent && document.readyState === 'interactive')) {
             jSite.ready.start();
         } else if (handle) {
             if (document.addEventListener) {
-                document.addEventListener("DOMContentLoaded", jSite.ready.start, false);
-                window.addEventListener("load", jSite.ready.start, false);
+                document.addEventListener('DOMContentLoaded', jSite.ready.start, false);
+                window.addEventListener('load', jSite.ready.start, false);
             } else {
-                document.attachEvent("onreadystatechange", function() {
-                    if (document.readyState === "complete") {
+                document.attachEvent('onreadystatechange', function() {
+                    if (document.readyState === 'complete') {
                         jSite.ready.start();
                     }
                 });
-                window.attachEvent("onload", jSite.ready.start);
+                window.attachEvent('onload', jSite.ready.start);
             }
         }
     };
@@ -199,7 +200,7 @@
         },
         merge: function() {
             var target = arguments[0] || [];
-            jSite.each([].slice.call(arguments, 1), function(i, obj, arguments) {
+            jSite.each([].slice.call(arguments, 1), function(i, obj) {
                 if (jSite.isArrayLike(obj)) {
                     for (var j = 0; j < obj.length; j++) {
                         [].push.call(target, obj[j]);
@@ -232,7 +233,7 @@
             var type;
 
             if (typeof obj === 'object' || typeof obj === 'function') {
-                type = {}.toString.call(obj).toLowerCase().match(/^\[object\s+([a-z]+)\]$/);
+                type = {}.toString.call(obj).toLowerCase().match(/^\[object\s+([a-z]+)]$/);
                 type = type ? type[1] : 'object';
             } else {
                 type = typeof obj;
@@ -299,7 +300,7 @@
                         obj === "true" ? true : obj === "false" ? false : obj === "null" ? null :
                             // Only convert to a number if it doesn't change the string
                             +obj + "" === obj ? +obj :
-                                /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/.test(obj) ? JSON.parse(obj) :
+                                /^(?:\{[\w\W]*}|\[[\w\W]*])$/.test(obj) ? JSON.parse(obj) :
                                     obj;
                 } catch(e) {}
             }
@@ -311,7 +312,9 @@
                 path = path.split('.');
             }
 
-            var target = obj = {};
+            var obj = {};
+            var target = obj;
+
             for (var i = 0; i < path.length; i++) {
                 obj = (obj[path[i]] = i === path.length-1 ? value : {});
             }
@@ -319,7 +322,7 @@
             return target;
         },
         getData: function(obj, path) {
-            if (jSite.type(path) === 'null') {
+            if (jSite.isUndefined(path)) {
                 return obj;
             }
 
@@ -328,7 +331,7 @@
             }
 
             for (var i = 0; i < path.length; i++) {
-                if (obj.hasOwnProperty(i)) {
+                if (obj.hasOwnProperty(path[i])) {
                     obj = obj[path[i]];
                     continue;
                 }
@@ -339,7 +342,7 @@
             return obj;
         },
         getOnly: function(obj, keys, except) {
-            if (!jSite.isDefined(keys)) {
+            if (jSite.isUndefined(keys)) {
                 return obj;
             }
 
@@ -349,17 +352,19 @@
                 returnFirst = !except;
             }
 
-            var inArr;
             var target = {};
             for (var i in obj) {
                 if (obj.hasOwnProperty(i) && jSite.inArray(keys, i) === !except)
                     target[i] = obj[i];
             }
 
-            if (returnFirst)
+            if (returnFirst) {
                 for (i in target)
                     if (target.hasOwnProperty(i))
                         return target[i];
+                return void 0;
+            }
+
             return target;
         },
         invertKeys: function(obj) {
@@ -402,7 +407,6 @@
     jSite.extend({
         md: {
             extend: jSite.extend,
-
             load: function() {
                 jSite.ready(function() {
                     // auto init
@@ -418,7 +422,6 @@
                     });
                 });
             },
-
             init: function(name) {
                 if (jSite.md.hasOwnProperty(name) && jSite.isFunction(jSite.md[name].init)) {
                     jSite.md[name].module = jSite.md[name].init.apply({});
@@ -426,7 +429,6 @@
                     jSite.error('module does not contain a module named <' + name + '> to init.')
                 }
             },
-
             bind: function(name) {
                 if (jSite.md.hasOwnProperty(name) && jSite.isFunction(jSite.md[name].bind)) {
                     jSite.md[name].bind.apply({module: jSite.md[name].module || {}, node: this}, [].slice.call(arguments, 1));
