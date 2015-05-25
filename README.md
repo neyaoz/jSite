@@ -10,6 +10,193 @@ bower install jsite
 
 ## Özellikler
 
+### DOM Modülleri
+DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildiğinde jSite örneği aracılığıyla da çağırılabilen ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır. DOM fonksiyonlarından daha gelişmiş olan bu yapının initialize desteği vardır. Genişletilirken tanımlanan **init** metodu aracılığıyla önyükleme sırasında istenilen işlemler yapılabilir ve dönen değere **bind** metodu içinden **this** anahtarı aracılığıyla istenildiği zaman ulaşılabilir.
+
+
+
+#### DOM Modüllerini Genişletme
+DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
+
+###### Örnek 1:
+```JS
+jSite.md.extend({
+  random: {
+    init: function() {
+      this.generate = function(options) {
+        var min = options.min || 0;
+        var max = options.max || 100;
+        return Math.floor(Math.random() * (max - min)) + min
+      };
+
+      return this;
+    },
+    bind: function(options) {
+      options = options || jSite(this.node).options(['min', 'max']);
+      this.node.innerHTML = this.module.generate(options)
+    }
+  }
+});
+```
+
+Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+
+```HTML
+<random option-min="10" option-max="99"></random> <!-- => 64 -->
+````
+veya
+```HTML
+<div data-init="random" option-min="10" option-max="99"></random> <!-- => 58 -->  
+````
+veya
+```JS
+jSite('foo#bar').md('random');
+```
+```HTML
+<foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
+```
+veya
+```JS
+jSite('foo#bar').md('random', { min: 10, max: 99 });
+```
+```HTML
+<foo id="bar"></foo> <!-- => 14 -->
+```
+
+
+### DOM Fonksiyonları
+DOM fonksiyonları, jSite örneği aracılığıyla çağırılan ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır.
+
+```JS
+jSite('body').each(function(index, element, instance) {
+  console.log(jSite(this).options())
+});
+```
+
+DOM elementleri farklı şekillerde kümelenebilir.
+
+```JS
+jSite(document); // => [document]
+jSite(document.body); // => [<body>]
+jSite(document.getElementById('foo')); // => [<bar id="foo">]
+jSite(document.getElementsByTagName('bar')); // => [<bar id="foo">, <bar id="noo">]
+jSite(document.querySelectorAll('bar#foo')); // => [<bar id="foo">]
+jSite(document, document.head, document.body); // => [document, <head>, <body>]
+jSite(document, 'head', 'body', 'bar'); // => [document, <head>, <body>, <bar>]
+```
+
+
+#### Öntanımlı DOM Fonksiyonları
+
+
+##### each(callback(index, element, instance)) => instance
+Kümedeki her elemente geri çağırımı uygular. Geri çağırım **false** döndüğü takdirde döngü sonlandırılır.
+
+```JS
+var array = [];
+jSite('head', 'body', 'bar').each(function(index, value, instance) {
+  array.push(index + ':'  + this.tagName);
+}); // => [<head>, <body>, <bar>, <bar#foo>]
+
+return array; // => ['0:head', '1:body', '2:bar', '3:bar']
+```
+
+
+##### options(only, except) => (mixed)
+Kümedeki ilk elemanın option niteliklerini dönderir.
+
+
+###### Örnek 1:
+```HTML
+<tag option-foo="x" option-bar="y">
+```
+
+```JS
+jSite('tag').options(); // => { foo: 'y', bar: 'y' }
+jSite('tag').options('foo'); // => 'x'
+jSite('tag').options('foo', true); // => { bar: 'y' }
+
+jSite('tag').options(['foo']); // => { foo: 'x' }
+jSite('tag').options(['foo'], true); // => { bar: 'y' }
+```
+
+
+###### Örnek 2:
+```HTML
+<tag
+  option-foo-bar="1"
+  option-foo--bar="2"
+  option-foo---bar="3"
+  option-foo.bar="4"
+  option-foo.baz="5"
+
+  option-qux="6"
+  option--qux="7"
+></tag>
+```
+
+```JS
+jSite('tag').options(); // =>
+/*
+  {
+    'fooBar': 1,
+    'foo-bar': 2,
+    'foo-Bar': 3,
+    'foo': {
+      'bar': 4,
+      'baz': 5
+    },
+    'qux': 6,
+    'Qux': 7
+  }
+*/
+```
+
+
+#### DOM Fonksiyonlarını Genişletme
+DOM fonksiyonlarını jSite.fn.extend() ile genişletebilirsiniz.
+
+###### Örnek 1:
+```JS
+jSite.fn.extend({
+  'changeID': function(id) {
+    return this.each(function(index, element, instance) {
+      element.id = id;
+    });
+   }
+});
+```
+
+Yaptığınız bu tanımlama ile oluşan **changeID** DOM fonksiyonunu dilediğiniz element ile kullanabilirsiniz.
+
+```JS
+jSite('bar#example').changeID('new'); // => <bar id="example">
+```
+
+
+###### Örnek 2:
+```JS
+jSite.fn.extend({
+  'autoSlider': function() {
+    return this.each(function(index, element, instance) {
+      $(this).slider(jSite(this).options());
+    });
+   }
+});
+```
+
+Yaptığınız bu tanımlama ile oluşan **autoSlider*** DOM fonksiyonunu kullanarak, jQuery UI Slider aracının elementin niteliklerinde belirtilen ayarlar ile çağırılmasını sağlayabilirsiniz.
+
+```JS
+jSite('div.example').autoSlider();
+```
+
+
+```HTML
+<div class="example" option-min="1" option-max="9"></div>
+```
+
+
 ### Yardımcı Metotlar
 Yardımcı metotlar, jSite objesi aracılığıyla doğrudan çağırılan ve girilen argümanları işleyip yanıt dönen metotlardır.
 
@@ -245,193 +432,4 @@ Yaptığınız bu tanımlama ile örnek olarak oluşan **log** yardımcı metodu
 
 ```JS
 jSite.log('it is logged!')
-```
-
--
-
-### DOM Fonksiyonları
-DOM fonksiyonları, jSite örneği aracılığıyla çağırılan ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır.
-
-```JS
-jSite('body').each(function(index, element, instance) {
-  console.log(jSite(this).options())
-});
-```
-
-DOM elementleri farklı şekillerde kümelenebilir.
-
-```JS
-jSite(document); // => [document]
-jSite(document.body); // => [<body>]
-jSite(document.getElementById('foo')); // => [<bar id="foo">]
-jSite(document.getElementsByTagName('bar')); // => [<bar id="foo">, <bar id="noo">]
-jSite(document.querySelectorAll('bar#foo')); // => [<bar id="foo">]
-jSite(document, document.head, document.body); // => [document, <head>, <body>]
-jSite(document, 'head', 'body', 'bar'); // => [document, <head>, <body>, <bar>]
-```
-
-
-#### Öntanımlı DOM Fonksiyonları
-
-
-##### each(callback(index, element, instance)) => instance
-Kümedeki her elemente geri çağırımı uygular. Geri çağırım **false** döndüğü takdirde döngü sonlandırılır.
-
-```JS
-var array = [];
-jSite('head', 'body', 'bar').each(function(index, value, instance) {
-  array.push(index + ':'  + this.tagName);
-}); // => [<head>, <body>, <bar>, <bar#foo>]
-
-return array; // => ['0:head', '1:body', '2:bar', '3:bar']
-```
-
-
-##### options(only, except) => (mixed)
-Kümedeki ilk elemanın option niteliklerini dönderir.
-
-
-###### Örnek 1:
-```HTML
-<tag option-foo="x" option-bar="y">
-```
-
-```JS
-jSite('tag').options(); // => { foo: 'y', bar: 'y' }
-jSite('tag').options('foo'); // => 'x'
-jSite('tag').options('foo', true); // => { bar: 'y' }
-
-jSite('tag').options(['foo']); // => { foo: 'x' }
-jSite('tag').options(['foo'], true); // => { bar: 'y' }
-```
-
-
-###### Örnek 2:
-```HTML
-<tag
-  option-foo-bar="1"
-  option-foo--bar="2"
-  option-foo---bar="3"
-  option-foo.bar="4"
-  option-foo.baz="5"
-
-  option-qux="6"
-  option--qux="7"
-></tag>
-```
-
-```JS
-jSite('tag').options(); // =>
-/*
-  {
-    'fooBar': 1,
-    'foo-bar': 2,
-    'foo-Bar': 3,
-    'foo': {
-      'bar': 4,
-      'baz': 5
-    },
-    'qux': 6,
-    'Qux': 7
-  }
-*/
-```
-
-
-#### DOM Fonksiyonlarını Genişletme
-DOM fonksiyonlarını jSite.fn.extend() ile genişletebilirsiniz.
-
-###### Örnek 1:
-```JS
-jSite.fn.extend({
-  'changeID': function(id) {
-    return this.each(function(index, element, instance) {
-      element.id = id;
-    });
-   }
-});
-```
-
-Yaptığınız bu tanımlama ile oluşan **changeID** DOM fonksiyonunu dilediğiniz element ile kullanabilirsiniz.
-
-```JS
-jSite('bar#example').changeID('new'); // => <bar id="example">
-```
-
-
-###### Örnek 2:
-```JS
-jSite.fn.extend({
-  'autoSlider': function() {
-    return this.each(function(index, element, instance) {
-      $(this).slider(jSite(this).options());
-    });
-   }
-});
-```
-
-Yaptığınız bu tanımlama ile oluşan **autoSlider*** DOM fonksiyonunu kullanarak, jQuery UI Slider aracının elementin niteliklerinde belirtilen ayarlar ile çağırılmasını sağlayabilirsiniz.
-
-```JS
-jSite('div.example').autoSlider();
-```
-
-
-```HTML
-<div class="example" option-min="1" option-max="9"></div>
-```
-
--
-
-### DOM Modülleri
-DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildiğinde jSite örneği aracılığıyla da çağırılabilen ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır. DOM fonksiyonlarından daha gelişmiş olan bu yapının initialize desteği vardır. Genişletilirken tanımlanan **init** metodu aracılığıyla önyükleme sırasında istenilen işlemler yapılabilir ve dönen değere **bind** metodu içinden **this** anahtarı aracılığıyla istenildiği zaman ulaşılabilir.
-
-
-
-#### DOM Modüllerini Genişletme
-DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
-
-###### Örnek 1:
-```JS
-jSite.md.extend({
-  random: {
-    init: function() {
-      this.generate = function(options) {
-        var min = options.min || 0;
-        var max = options.max || 100;
-        return Math.floor(Math.random() * (max - min)) + min
-      };
-
-      return this;
-    },
-    bind: function(options) {
-      options = options || jSite(this.node).options(['min', 'max']);
-      this.node.innerHTML = this.module.generate(options)
-    }
-  }
-});
-```
-
-Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
-
-```HTML
-<random option-min="10" option-max="99"></random> <!-- => 64 -->
-````
-veya
-```HTML
-<div data-init="random" option-min="10" option-max="99"></random> <!-- => 58 -->  
-````
-veya
-```JS
-jSite('foo#bar').md('random');
-```
-```HTML
-<foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
-```
-veya
-```JS
-jSite('foo#bar').md('random', { min: 10, max: 99 });
-```
-```HTML
-<foo id="bar"></foo> <!-- => 14 -->
 ```
