@@ -46,7 +46,7 @@ Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\
 ````
 veya
 ```HTML
-<div data-init="random" option-min="10" option-max="99"></random> <!-- => 58 -->  
+<foo data-init="random" option-min="10" option-max="99"></foo> <!-- => 58 -->  
 ````
 veya
 ```JS

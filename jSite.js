@@ -35,7 +35,7 @@
 
     jSite.fn =
         jSite.prototype = {
-            version: '0.1.0-alpha',
+            version: '0.1.0-alpha.1',
             constructor: jSite,
             context: document,
             length: 0,
@@ -66,17 +66,21 @@
         var that = this;
         var pushStack;
 
+        //todo find DOM fonksiyonu eklenip init'e entegre edilecek.
+
         jSite.each(arguments, pushStack = function(i, element) {
             if (jSite.isString(element)) {
-                element = document.querySelectorAll(element);
+                element = that.context.querySelectorAll(element);
             }
 
-            if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
+            if (jSite.isPlainObject(element)) {
+                $.extend(true, that, element);
+            } else if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
                 that.push(element);
-            } else if (jSite.isArrayLike(element)) {
-                jSite.each(element, pushStack);
             } else if (jSite.isFunction(element)) {
                 jSite.ready(element);
+            } else if (jSite.isArrayLike(element)) {
+                jSite.each(element, pushStack);
             }
         });
 
@@ -321,7 +325,7 @@
             return target;
         },
         getData: function(obj, path) {
-            if (jSite.isUndefined(path)) {
+            if (jSite.isUndefined(obj) || jSite.isUndefined(path)) {
                 return obj;
             }
 
@@ -406,19 +410,10 @@
     jSite.extend({
         md: {
             extend: jSite.extend,
-            load: function() {
+            loadAll: function() {
                 jSite.ready(function() {
-                    // auto init
-                    jSite.each(jSite.md, function(name, module) {
-                        if (jSite.isPlainObject(module) && jSite.isFunction(module.init))
-                            jSite.md.init(name);
-                    });
-
-                    // auto bind
-                    jSite.each(jSite.md, function(name, module) {
-                        if (jSite.isPlainObject(module) && jSite.isFunction(module.bind))
-                            jSite(name, '[data-init~="' + name + '"]').md(name);
-                    });
+                    jSite.md.initAll();
+                    jSite.md.bindAll();
                 });
             },
             init: function(name) {
@@ -428,12 +423,24 @@
                     jSite.error('module does not contain a module named <' + name + '> to init.')
                 }
             },
+            initAll: function() {
+                jSite.each(jSite.md, function(name, module) {
+                    if (jSite.isPlainObject(module) && jSite.isFunction(module.init))
+                        jSite.md.init(name);
+                });
+            },
             bind: function(name) {
                 if (jSite.md.hasOwnProperty(name) && jSite.isFunction(jSite.md[name].bind)) {
                     jSite.md[name].bind.apply({module: jSite.md[name].module || {}, node: this}, [].slice.call(arguments, 1));
                 } else {
                     jSite.error('module does not contain a module named <' + name + '> to bind.')
                 }
+            },
+            bindAll: function(context) {
+                jSite.each(jSite.md, function(name, module) {
+                    if (jSite.isPlainObject(module) && jSite.isFunction(module.bind))
+                        jSite({ context: context }, name, '[data-init~="' + name + '"]').md(name);
+                });
             }
         }
     });
@@ -445,7 +452,7 @@
             }, arguments)
         }
     });
-    jSite.md.load();
+    jSite.md.loadAll();
 
 
     // Register as a named AMD module, since jSite can be concatenated with other
@@ -468,9 +475,9 @@
     }
 
     var
-        // Map over jSite in case of overwrite
+    // Map over jSite in case of overwrite
         _jSite = window.jSite,
-        // Map over the j in case of overwrite
+    // Map over the j in case of overwrite
         _j = window.j;
 
     jSite.noConflict = function(deep) {
