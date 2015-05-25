@@ -74,7 +74,7 @@
             }
 
             if (jSite.isPlainObject(element)) {
-                $.extend(true, that, element);
+                jSite.extend(true, that, element);
             } else if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
                 that.push(element);
             } else if (jSite.isFunction(element)) {
