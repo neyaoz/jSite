@@ -1,6 +1,6 @@
 {
   "name": "jSite",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "main": "jSite.js",
   "authors": [
     "@rephole"
@@ -8,8 +8,7 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
-    ".DS_Store",
-    ".idea",
-    ".dev"
+    "tests",
+    "examples"
   ]
 }

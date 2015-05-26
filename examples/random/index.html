@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>jSite Examples</title>
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="../src/lib/html5shiv/dist/html5shiv.js"></script>
+            <script src="../src/lib/respond/dest/respond.src.js"></script>
+        <![endif]-->
+
+        <link rel="stylesheet" type="text/css" href="../src/lib/prism/themes/prism-okaidia.css" />
+        <link rel="stylesheet" type="text/css" href="../src/lib/prism/plugins/line-numbers/prism-line-numbers.css" />
+        <link rel="stylesheet" type="text/css" href="../src/lib/prism/plugins/line-highlight/prism-line-highlight.css" />
+
+        <link rel="stylesheet" type="text/css" href="../src/css/main.css">
+    </head>
+    <body>
+        <div id="main">
+            <header>
+                <div class="container">
+                    <h1>jSite Examples</h1>
+                </div>
+            </header>
+            <section>
+                <div class="container">
+                    <div class="peak">
+                        <h2>Random Module</h2>
+                    </div>
+                    <div class="page">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <div class="wrapper sandbox">
+                                    <div class="inner">
+                                        <random></random>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="wrapper sandbox">
+                                    <div class="inner">
+                                        <random option-min="1000" option-max="9999"></random>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="wrapper sandbox">
+                                    <div class="inner">
+                                        <random option-min="0" option-max="1"></random>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="wrapper sandbox">
+                                    <div class="inner">
+                                        <random option-min="-100" option-max="0"></random>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <pre class="language-javascript line-numbers" data-src="app.js" data-line="7-14"></pre>
+                    </div>
+                </div>
+            </section>
+            <footer>
+
+            </footer>
+        </div>
+
+        <script type="text/javascript" src="../src/lib/prism/prism.js"></script>
+        <script type="text/javascript" src="../src/lib/prism/plugins/line-numbers/prism-line-numbers.js"></script>
+        <script type="text/javascript" src="../src/lib/prism/plugins/line-highlight/prism-line-highlight.js"></script>
+        <script type="text/javascript" src="../../jSite.js"></script>
+
+        <script type="text/javascript" src="app.js"></script>
+    </body>
+</html>

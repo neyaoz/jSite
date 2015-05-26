@@ -35,7 +35,7 @@
 
     jSite.fn =
         jSite.prototype = {
-            version: '0.1.0-alpha.1',
+            version: '0.1.0-alpha.2',
             constructor: jSite,
             context: document,
             length: 0,
@@ -426,7 +426,7 @@
             bindAll: function(context) {
                 jSite.each(jSite.md, function(name, module) {
                     if (jSite.isPlain(module) && jSite.isFunction(module.bind))
-                        jSite({ context: context }, name, '[data-init~="' + name + '"]').md(name);
+                        jSite([name, '[data-init~="' + name + '"]'], context).md(name);
                 });
             }
         },

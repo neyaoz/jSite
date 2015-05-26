@@ -1,0 +1,25 @@
+section {
+  padding: 20px;
+
+  .peak {
+    border-bottom: 1px solid $gray;
+    margin-bottom: 20px;
+    color: $gray;
+    font-weight: normal;
+
+    h2 {
+      font-weight: inherit;
+    }
+  }
+
+  .wrapper.sandbox {
+    background-color: #FFCE54;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 40px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 300;
+    text-align: center;
+  }
+}
