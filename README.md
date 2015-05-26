@@ -76,13 +76,13 @@ jSite('body').each(function(index, element, instance) {
 DOM elementleri farklı şekillerde kümelenebilir.
 
 ```JS
-jSite(document); // => [document]
-jSite(document.body); // => [<body>]
-jSite(document.getElementById('foo')); // => [<bar id="foo">]
-jSite(document.getElementsByTagName('bar')); // => [<bar id="foo">, <bar id="noo">]
-jSite(document.querySelectorAll('bar#foo')); // => [<bar id="foo">]
-jSite(document, document.head, document.body); // => [document, <head>, <body>]
-jSite(document, 'head', 'body', 'bar'); // => [document, <head>, <body>, <bar>]
+jSite( document ); // => [document]
+jSite( document.body ); // => [<body>]
+jSite( document.getElementById('foo') ); // => [<bar id="foo">]
+jSite( document.getElementsByTagName('bar') ); // => [<bar id="foo">, <bar id="noo">]
+jSite( document.querySelectorAll('bar#foo') ); // => [<bar id="foo">]
+jSite([document, document.head, document.body]); // => [document, <head>, <body>]
+jSite([document, 'head', 'body', 'bar']); // => [document, <head>, <body>, <bar>]
 ```
 
 
@@ -94,7 +94,7 @@ Kümedeki her elemente geri çağırımı uygular. Geri çağırım **false** d�
 
 ```JS
 var array = [];
-jSite('head', 'body', 'bar').each(function(index, value, instance) {
+jSite(['head', 'body', 'bar']).each(function(index, value, instance) {
   array.push(index + ':'  + this.tagName);
 }); // => [<head>, <body>, <bar>, <bar#foo>]
 
@@ -373,7 +373,7 @@ Girilen verinin numerik olup olmadığını kontrol eder.
 Girilen verinin obje olup olmadığını kontrol eder.
 
 
-##### isPlainObject(obj)
+##### isPlain(obj)
 Girilen verinin yalın obje olup olmadığını kontrol eder.
 
 
@@ -381,7 +381,7 @@ Girilen verinin yalın obje olup olmadığını kontrol eder.
 Girilen verinin dizi olup olmadığını kontrol eder.
 
 
-##### inArray(obj, key)
+##### inArray(obj, value)
 Girilen dizinin ilgili anahtara sahip olup olmadığını kontrol eder.
 
 

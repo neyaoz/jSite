@@ -26,10 +26,10 @@
 
     // Define a local copy of jSite
     var jSite =
-        function() {
+        function(cluster, context) {
             // The jSite object is actually just the init constructor 'enhanced'
             // Need init if jSite is called (just allow error to be thrown if not included)
-            return new jSite.fn.init(arguments);
+            return new jSite.fn.init(cluster, context);
         };
 
 
@@ -62,25 +62,25 @@
         };
 
 
-    jSite.fn.init = function() {
-        var that = this;
+    jSite.fn.init = function(cluster, context) {
+        var root = this;
+
+        if (jSite.isElement(context) || jSite.isDocument(context)) {
+            root.context = context;
+        }
+
         var pushStack;
-
-        //todo find DOM fonksiyonu eklenip init'e entegre edilecek.
-
-        jSite.each(arguments, pushStack = function(i, element) {
-            if (jSite.isString(element)) {
-                element = that.context.querySelectorAll(element);
+        jSite.each([cluster], pushStack = function(i, node) {
+            if (jSite.isString(node)) {
+                node = root.context.querySelectorAll(node);
             }
 
-            if (jSite.isPlainObject(element)) {
-                jSite.extend(true, that, element);
-            } else if (jSite.isElement(element) || jSite.isDocument(element) || jSite.isWindow(element)) {
-                that.push(element);
-            } else if (jSite.isFunction(element)) {
-                jSite.ready(element);
-            } else if (jSite.isArrayLike(element)) {
-                jSite.each(element, pushStack);
+            if (jSite.isElement(node) || jSite.isDocument(node) || jSite.isWindow(node)) {
+                jSite.inArray(root, node) || root.push(node);
+            } else if (jSite.isFunction(node)) {
+                jSite.ready(node);
+            } else if (jSite.isArrayLike(node)) {
+                jSite.each(node, pushStack);
             }
         });
 
@@ -91,68 +91,48 @@
 
     jSite.extend =
         jSite.fn.extend = function() {
-            // todo refactoring yapilacak
-            var options, name, src, copy, copyIsArray, clone,
-                target = arguments[0] || {},
-                i = 1,
-                length = arguments.length,
-                deep = false;
+            var cluster = [].slice.call(arguments);
 
-            // Handle a deep copy situation
-            if ( typeof target === "boolean" ) {
-                deep = target;
-
-                // Skip the boolean and the target
-                target = arguments[ i ] || {};
-                i++;
+            var isDeep = false;
+            if (typeof cluster[0] === 'boolean') {
+                isDeep = cluster.shift();
             }
 
-            // Handle case when target is a string or something (possible in deep copy)
-            if ( typeof target !== "object" && !jSite.isFunction(target) ) {
-                target = {};
+            var target = this;
+            if (cluster.length > 1) {
+                target = cluster.shift();
+
+                if (typeof target !== 'object' && typeof target !== 'function') {
+                    target = {};
+                }
             }
 
-            // Extend jSite itself if only one argument is passed
-            if ( i === length ) {
-                target = this;
-                i--;
-            }
-
-            for ( ; i < length; i++ ) {
-                // Only deal with non-null/undefined values
-                if ( (options = arguments[ i ]) != null ) {
-                    // Extend the base object
-                    for ( name in options ) {
-                        src = target[ name ];
-                        copy = options[ name ];
-
-                        // Prevent never-ending loop
-                        if ( target === copy ) {
+            var object;
+            for (var i = 0; i < cluster.length; i++) {
+                if (typeof (object = cluster[i]) === 'object') {
+                    for (var k in object) {
+                        if (!object.hasOwnProperty(k) || object[k] === target) {
                             continue;
                         }
 
-                        // Recurse if we're merging plain objects or arrays
-                        if ( deep && copy && ( jSite.isPlainObject(copy) || (copyIsArray = jSite.isArray(copy)) ) ) {
-                            if ( copyIsArray ) {
-                                copyIsArray = false;
-                                clone = src && jSite.isArray(src) ? src : [];
+                        var value = target[k];
+                        var clone = object[k], isArrayClone;
 
+                        if (isDeep && ((isArrayClone = jSite.isArray(clone)) || jSite.isPlain(clone))) {
+                            if (isArrayClone) {
+                                jSite.isArray(value) || (value = []);
                             } else {
-                                clone = src && jSite.isPlainObject(src) ? src : {};
+                                jSite.isPlain(value) || jSite.isFunction(value) || jSite.fn === value || (value = {});
                             }
 
-                            // Never move original objects, clone them
-                            target[ name ] = jSite.extend( deep, clone, copy );
-
-                            // Don't bring in undefined values
-                        } else if ( copy !== undefined ) {
-                            target[ name ] = copy;
+                            target[k] = jSite.extend(isDeep, value, clone);
+                        } else if(typeof clone !== 'undefined') {
+                            target[k] = clone;
                         }
                     }
                 }
             }
 
-            // Return the modified object
             return target;
         };
 
@@ -198,6 +178,77 @@
 
 
     jSite.extend({
+        type: function(obj) {
+            var type;
+
+            if (typeof obj === 'object' || typeof obj === 'function') {
+                type = {}.toString.call(obj).toLowerCase().match(/^\[object\s+([a-z]+)]$/);
+                type = type ? type[1] : 'object';
+            } else {
+                type = typeof obj;
+            }
+
+            return type;
+        },
+        isString: function(obj) {
+            return jSite.type(obj) === 'string';
+        },
+        isNumeric: function(obj) {
+            return !jSite.isArray(obj) &&
+                (obj - parseFloat(obj) + 1) >= 0;
+        },
+        isObject: function(obj) {
+            return typeof obj === 'object';
+        },
+        isPlain: function(obj) {
+            return jSite.type(obj) === 'object'
+                && !(obj.constructor
+                && !{}.hasOwnProperty.call(obj.constructor.prototype, "isPrototypeOf"));
+        },
+        isPlainObject: function(obj) {
+            return jSite.isPlain(obj);
+        },
+        isArray: Array.isArray,
+        inArray: function(obj, value) {
+            if (jSite.isArrayLike(obj))
+                for (var i = 0; i < obj.length; i++)
+                    if (obj[i] === value)
+                        return true;
+            return false;
+        },
+        isArrayLike: function(obj) {
+            if (obj && jSite.isObject(obj))
+                return jSite.isArray(obj) || obj.length === 0 || typeof obj.length === "number" && obj.length > 0 && (obj.length-1) in obj;
+            return false;
+        },
+        isElement: function(obj) {
+            return obj && obj.nodeType === 1;
+        },
+        isDocument: function(obj) {
+            return obj && obj.nodeType === 9;
+        },
+        isWindow: function(obj) {
+            return obj && obj === obj.window;
+        },
+        isFunction: function(obj) {
+            return jSite.type(obj) === 'function';
+        },
+        isEmpty: function(obj) {
+            if (obj === null) return true;
+            if (jSite.isArray(obj) || jSite.isString(obj)) return obj.length === 0;
+            for (var i in obj) if (obj.hasOwnProperty(i)) return false;
+            return true;
+        },
+        isDefined: function(obj) {
+            return obj !== void 0;
+        },
+        isUndefined: function(obj) {
+            return !jSite.isDefined(obj)
+        }
+    });
+
+
+    jSite.extend({
         error: function(message) {
             throw new Error(message);
         },
@@ -227,70 +278,6 @@
 
             // TODO results[] support will be added
             return obj;
-        }
-    });
-
-
-    jSite.extend({
-        type: function(obj) {
-            var type;
-
-            if (typeof obj === 'object' || typeof obj === 'function') {
-                type = {}.toString.call(obj).toLowerCase().match(/^\[object\s+([a-z]+)]$/);
-                type = type ? type[1] : 'object';
-            } else {
-                type = typeof obj;
-            }
-
-            return type;
-        },
-        isString: function(obj) {
-            return jSite.type(obj) === 'string';
-        },
-        isNumeric: function(obj) {
-            return !jSite.isArray(obj) &&
-                (obj - parseFloat(obj) + 1) >= 0;
-        },
-        isObject: function(obj) {
-            return typeof obj === 'object';
-        },
-        isPlainObject: function(obj) {
-            return jSite.type(obj) === 'object'
-                && !(obj.constructor
-                && !{}.hasOwnProperty.call(obj.constructor.prototype, "isPrototypeOf"));
-        },
-        isArray: Array.isArray,
-        inArray: function(obj, key) {
-            return jSite.isArray(obj) && obj.indexOf(key) !== -1;
-        },
-        isArrayLike: function(obj) {
-            if (!obj || typeof obj !== 'object') return false;
-            if (jSite.isArray(obj)) return true;
-            return obj.length === 0 || typeof obj.length === "number" && obj.length > 0 && (obj.length-1) in obj
-        },
-        isElement: function(obj) {
-            return obj && obj.nodeType === 1;
-        },
-        isDocument: function(obj) {
-            return obj && obj.nodeType === 9;
-        },
-        isWindow: function(obj) {
-            return obj === obj.window;
-        },
-        isFunction: function(obj) {
-            return jSite.type(obj) === 'function';
-        },
-        isEmpty: function(obj) {
-            if (obj === null) return true;
-            if (jSite.isArray(obj) || jSite.isString(obj)) return obj.length === 0;
-            for (var i in obj) if (obj.hasOwnProperty(i)) return false;
-            return true;
-        },
-        isDefined: function(obj) {
-            return obj !== void 0;
-        },
-        isUndefined: function(obj) {
-            return !jSite.isDefined(obj)
         }
     });
 
@@ -407,7 +394,7 @@
     });
 
 
-    jSite.extend({
+    jSite.extend(true, {
         md: {
             extend: jSite.extend,
             loadAll: function() {
@@ -425,7 +412,7 @@
             },
             initAll: function() {
                 jSite.each(jSite.md, function(name, module) {
-                    if (jSite.isPlainObject(module) && jSite.isFunction(module.init))
+                    if (jSite.isPlain(module) && jSite.isFunction(module.init))
                         jSite.md.init(name);
                 });
             },
@@ -438,18 +425,17 @@
             },
             bindAll: function(context) {
                 jSite.each(jSite.md, function(name, module) {
-                    if (jSite.isPlainObject(module) && jSite.isFunction(module.bind))
+                    if (jSite.isPlain(module) && jSite.isFunction(module.bind))
                         jSite({ context: context }, name, '[data-init~="' + name + '"]').md(name);
                 });
             }
-        }
-    });
-
-    jSite.fn.extend({
-        md: function(name) {
-            this.each(function () {
-                jSite.md.bind.apply(this, [].slice.call(arguments));
-            }, arguments)
+        },
+        fn: {
+            md: function(name) {
+                this.each(function () {
+                    jSite.md.bind.apply(this, [].slice.call(arguments));
+                }, arguments)
+            }
         }
     });
     jSite.md.loadAll();
@@ -468,8 +454,8 @@
     // AMD loader is present. jSite is a special case. For more information, see
     // https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
 
-    if ( typeof define === "function" && define.amd ) {
-        define("jsite", [], function() {
+    if (typeof define === 'function' && define.amd) {
+        define('jsite', [], function() {
             return jSite;
         });
     }
