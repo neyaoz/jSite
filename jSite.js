@@ -35,7 +35,7 @@
 
     jSite.fn =
         jSite.prototype = {
-            version: '0.1.0-alpha.2',
+            version: '0.1.0-alpha.3',
             constructor: jSite,
             context: document,
             length: 0,
@@ -138,7 +138,6 @@
 
 
     jSite.extend({
-        isReady: false,
         ready: function(callback) {
             if (jSite.isReady) {
                 callback.call(window, jSite);
@@ -157,10 +156,15 @@
             });
         }
     };
-    jSite.ready.check = function(handle) {
+    jSite.ready.check = function() {
         if (document.readyState === 'complete' || (!document.attachEvent && document.readyState === 'interactive')) {
             jSite.ready.start();
-        } else if (handle) {
+            return;
+        }
+
+        if (jSite.isReady === null) {
+            jSite.isReady   =  !!0;
+
             if (document.addEventListener) {
                 document.addEventListener('DOMContentLoaded', jSite.ready.start, false);
                 window.addEventListener('load', jSite.ready.start, false);
@@ -174,7 +178,6 @@
             }
         }
     };
-    jSite.ready.check(true);
 
 
     jSite.extend({
