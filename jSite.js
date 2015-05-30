@@ -35,7 +35,7 @@
 
     jSite.fn =
         jSite.prototype = {
-            version: '0.1.0-alpha.3',
+            version: '0.1.0-alpha.4',
             constructor: jSite,
             context: document,
             length: 0,
@@ -138,6 +138,7 @@
 
 
     jSite.extend({
+        isReady: null,
         ready: function(callback) {
             if (jSite.isReady) {
                 callback.call(window, jSite);
