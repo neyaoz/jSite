@@ -22,6 +22,5 @@
   },
   "_source": "git://github.com/appleboy/normalize.scss.git",
   "_target": "~3.0.3",
-  "_originalSource": "normalize-scss",
-  "_direct": true
+  "_originalSource": "normalize-scss"
 }
