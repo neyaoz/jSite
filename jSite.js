@@ -550,10 +550,6 @@
 
             exists: function(name) {
                 return this.all.hasOwnProperty(name);
-            },
-
-            hasModule: function(node) {
-                return !! node.module;
             }
         },
         fn: {
