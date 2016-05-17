@@ -3,28 +3,32 @@
 
     jSite.md.extend({
         'moment': {
-            bind: function() {
-                var node = this.node;
-
+            onCompile: function(node) {
                 var instance =
-                    moment(jSite(node).options('parse'));
+                    moment(jSite(node).data('parse'));
 
-                jSite.each(jSite(node).options(), function(name, args) {
+                jSite.each(jSite(node).data(), function(name, args) {
                     args = args || void 0;
 
                     if (jSite.isFunction(instance[name]))
                         instance = instance[name](args);
                 });
 
-                this.node.innerHTML = instance;
+                node.innerHTML = instance;
+            },
+            onDataChange: function(node) {
+                this.md.onCompile.call(this.md, node);
             }
         },
         'duration': {
-            bind: function() {
-                var options = jSite(this.node).options(
+            onCompile: function(node) {
+                var data = jSite(node).data(
                     ['seconds','minutes', 'hours', 'days', 'weeks', 'months', 'years']
                 );
-                this.node.innerHTML = moment.duration(options).humanize();
+                node.innerHTML = moment.duration(data).humanize();
+            },
+            onDataChange: function(node) {
+                this.md.onCompile.call(this.md, node);
             }
         }
     });

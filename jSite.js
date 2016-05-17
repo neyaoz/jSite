@@ -384,65 +384,187 @@
 
 
     jSite.fn.extend({
-        options: function(only, except) {
-            var options = {};
+        data: function(only, except) {
+            var data = {};
 
             jSite.each(this.get(0).attributes, function(i, attribute, match) {
                 if (match = attribute.name.match(/^j-data-([_.:-a-z0-9]+)/i)) {
-                    jSite.extend(true, options, jSite.setData(jSite.camelCase(match[1]), jSite.parseData(attribute.value)));
+                    jSite.extend(true, data, jSite.setData(jSite.camelCase(match[1]), jSite.parseData(attribute.value)));
                 }
             });
 
-            return jSite.getOnly(options, only, except);
+            return jSite.getOnly(data, only, except);
         }
     });
 
-
     jSite.extend(true, {
         md: {
-            extend: jSite.extend,
-            loadAll: function() {
+            all: {},
+            observer: null,
+
+            extend: function() {
+                this.registerAll(jSite.extend.apply({}, Array.prototype.slice.call(arguments)));
+                return this.all;
+            },
+
+            init: function() {
+                var that = this;
+
+                jSite(function() {
+                    that.observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            var addedNodes = Array.prototype.slice.call(mutation.addedNodes);
+
+                            if (mutation.type === 'childList') {
+                                addedNodes.forEach(function(node) {
+                                    if (jSite.isElement(node)) {
+                                        jSite.md.compileNode(node);
+                                    }
+                                });
+                            }
+
+                            if (mutation.type === 'attributes' && mutation.target.hasOwnProperty('module')) {
+                                var match;
+                                if (match = mutation.attributeName.match(/^j-data-([_.:-a-z0-9]+)/i)) {
+                                    var module = mutation.target.module;
+
+                                    if (jSite.isFunction(module.md.onDataChange)) {
+                                        var name = jSite.camelCase(match[1]);
+                                        var data = jSite(mutation.target).data(name);
+
+                                        module.md.onDataChange.call(module, mutation.target, name, data);
+                                    }
+                                }
+                            }
+                        });
+                    });
+
+                    that.observer.observe(document, {
+                        attributes: true,
+                        characterData: true,
+                        childList: true,
+                        subtree: true
+                    });
+                });
+            },
+
+            registerAll: function(cluster) {
+                for(var k in cluster) {
+                    if (cluster.hasOwnProperty(k)) {
+                        this.register(k, cluster[k]);
+                    }
+                }
+
+                var that = this;
+
                 jSite.ready(function() {
-                    jSite.md.initAll();
-                    jSite.md.bindAll();
+                    that.bootAll(cluster);
+                    that.compileContext(document);
                 });
             },
-            init: function(name) {
-                if (jSite.md.hasOwnProperty(name) && jSite.isFunction(jSite.md[name].init)) {
-                    jSite.md[name].module = jSite.md[name].init.apply({});
-                } else {
-                    jSite.error('module does not contain a module named <' + name + '> to init.')
+
+            register: function(name, module, force) {
+                if (this.exists(name) && force !== true) {
+                    return;
+                }
+
+                this.put(name, module);
+
+                if (jSite.isFunction(module.onRegister)) {
+                    module.onRegister.call(module);
+                }
+                module.isRegistered = true;
+            },
+
+            bootAll: function(cluster) {
+                for(var k in cluster) {
+                    if (cluster.hasOwnProperty(k)) {
+                        this.boot(k);
+                    }
+                }
+
+                this.compileContext();
+            },
+
+            boot: function(name, force) {
+                var module = this.get(name);
+
+                if (module.isBooted === true && force !== true) {
+                    return;
+                }
+
+                if (jSite.isFunction(module.onBoot)) {
+                    module.onBoot.call(module);
+                }
+                module.isBooted = true;
+            },
+
+            compileContext: function(context, force) {
+                var that = this;
+
+                jSite('*', context).each(function() {
+                    that.compileNode(this, force);
+                });
+            },
+
+            compileNode: function(node, force)
+            {
+                var name =
+                    node.attributes['j-bind']
+                        ? node.attributes['j-bind'].value
+                        : node.tagName.toLowerCase();
+
+                if (this.exists(name)) {
+                    this.compile(name, node, force);
                 }
             },
-            initAll: function() {
-                jSite.each(jSite.md, function(name, module) {
-                    if (jSite.isPlain(module) && jSite.isFunction(module.init))
-                        jSite.md.init(name);
-                });
+
+            compile: function(name, node, force) {
+                var module = this.get(name);
+
+                if (node.isCompiled === true && force !== true) {
+                    return;
+                }
+
+                if (jSite.isFunction(module.onCompile)) {
+                    module.onCompile.call(node.module = { md: module }, node);
+                }
+
+                node.isCompiled = true;
             },
-            bind: function(name) {
-                if (jSite.md.hasOwnProperty(name) && jSite.isFunction(jSite.md[name].bind)) {
-                    jSite.md[name].bind.apply({module: jSite.md[name].module || {}, node: this}, [].slice.call(arguments, 1));
-                } else {
-                    jSite.error('module does not contain a module named <' + name + '> to bind.')
+
+            put: function(name, module) {
+                return this.all[name] = module;
+            },
+
+            get: function(name) {
+                this.require(name);
+                return this.all[name];
+            },
+
+            require: function(name) {
+                if (! this.exists(name)) {
+                    jSite.error('jSite does not contain a module named <' + name + '>')
                 }
             },
-            bindAll: function(context) {
-                jSite.each(jSite.md, function(name, module) {
-                    if (jSite.isPlain(module) && jSite.isFunction(module.bind))
-                        jSite([name, '[j-bind~="' + name + '"]'], context).md(name);
-                });
+
+            exists: function(name) {
+                return this.all.hasOwnProperty(name);
+            },
+
+            hasModule: function(node) {
+                return !! node.module;
             }
         },
         fn: {
-            md: function(name) {
+            md: function(name, force) {
                 this.each(function () {
-                    jSite.md.bind.apply(this, [].slice.call(arguments));
+                    jSite.md.compile(this, name, force);
                 }, arguments)
             }
         }
     });
-    jSite.md.loadAll();
+    jSite.md.init();
 
 
     // Register as a named AMD module, since jSite can be concatenated with other

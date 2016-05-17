@@ -11,8 +11,7 @@ bower install jsite
 ## Özellikler
 
 ### DOM Modülleri
-DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildiğinde jSite örneği aracılığıyla da çağırılabilen ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır. DOM fonksiyonlarından daha gelişmiş olan bu yapının initialize desteği vardır. Genişletilirken tanımlanan **init** metodu aracılığıyla önyükleme sırasında istenilen işlemler yapılabilir ve dönen değere **bind** metodu içinden **this** anahtarı aracılığıyla istenildiği zaman ulaşılabilir.
-
+DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildiğinde jSite örneği aracılığıyla da çağırılabilen ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır. DOM fonksiyonlarından daha gelişmiş olan bu yapının register, boot, compile ve mutation desteği vardır. Genişletilirken tanımlanan **onRegister** veya **onBoot** metodları aracılığıyla önyükleme sırasında istenilen işlemler yapılabilir.
 
 
 #### DOM Modüllerini Genişletme
@@ -22,31 +21,31 @@ DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
 ```JS
 jSite.md.extend({
   random: {
-    init: function() {
-      this.generate = function(options) {
+    onCompile: function(node) {
+      this.node = node;
+      this.rand = function(data) {
         var min = options.min || 0;
         var max = options.max || 100;
-        return Math.floor(Math.random() * (max - min)) + min
+        this.node.innerHTML = Math.floor(Math.random() * (max - min)) + min
       };
 
-      return this;
+      this.rand(jSite(node).data());
     },
-    bind: function(options) {
-      options = options || jSite(this.node).options(['min', 'max']);
-      this.node.innerHTML = this.module.generate(options)
+    onDataChange: function(node) {
+      this.rand(jSite(node).data());
     }
   }
 });
 ```
 
-Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [j-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [j-bind=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
 
 ```HTML
 <random j-data-min="10" j-data-max="99"></random> <!-- => 64 -->
 ````
 veya
 ```HTML
-<foo j-init="random" j-data-min="10" j-data-max="99"></foo> <!-- => 58 -->  
+<foo j-bind="random" j-data-min="10" j-data-max="99"></foo> <!-- => 58 -->
 ````
 veya
 ```JS
@@ -54,13 +53,6 @@ jSite('foo#bar').md('random');
 ```
 ```HTML
 <foo id="bar" j-data-min="10" j-data-max="99"></foo> <!-- => 14 -->
-```
-veya
-```JS
-jSite('foo#bar').md('random', { min: 10, max: 99 });
-```
-```HTML
-<foo id="bar"></foo> <!-- => 14 -->
 ```
 
 

@@ -3,17 +3,25 @@
 
     jSite.md.extend({
         'random': {
-            bind: function() {
-                var node = this.node;
+            onCompile: function(node) {
+                this.node = node;
+                this.data = { min: 0, max: 100};
+                this.rand = function(data) {
+                    jSite.extend(this.data, data || []);
 
-                var options = jSite.extend({
-                    min: 0,
-                    max: 100
-                }, jSite(node).options());
+                    this.value = Math.round(Math.random() * (this.data.max - this.data.min)) + this.data.min;
+                    node.innerHTML = this.value;
+                };
 
-                jSite.extend({min: 0, max: 100}, jSite(node).options(), {min: 1000});
+                this.rand(jSite(node).data());
+            },
+            onDataChange: function(node) {
 
-                node.innerHTML = Math.round(Math.random() * (options.max - options.min)) + options.min
+                var data = jSite(node).data();
+
+                if (data.min > this.value || this.value > data.max) {
+                    this.rand(data);
+                }
             }
         }
     });
