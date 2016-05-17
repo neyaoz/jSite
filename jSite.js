@@ -388,7 +388,7 @@
             var options = {};
 
             jSite.each(this.get(0).attributes, function(i, attribute, match) {
-                if (match = attribute.name.match(/^option-([_.:-a-z0-9]+)/i)) {
+                if (match = attribute.name.match(/^j-data-([_.:-a-z0-9]+)/i)) {
                     jSite.extend(true, options, jSite.setData(jSite.camelCase(match[1]), jSite.parseData(attribute.value)));
                 }
             });
@@ -430,7 +430,7 @@
             bindAll: function(context) {
                 jSite.each(jSite.md, function(name, module) {
                     if (jSite.isPlain(module) && jSite.isFunction(module.bind))
-                        jSite([name, '[data-init~="' + name + '"]'], context).md(name);
+                        jSite([name, '[j-bind~="' + name + '"]'], context).md(name);
                 });
             }
         },
