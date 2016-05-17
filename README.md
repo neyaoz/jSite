@@ -39,21 +39,21 @@ jSite.md.extend({
 });
 ```
 
-Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [data-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [j-init=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
 
 ```HTML
-<random option-min="10" option-max="99"></random> <!-- => 64 -->
+<random j-data-min="10" j-data-max="99"></random> <!-- => 64 -->
 ````
 veya
 ```HTML
-<foo data-init="random" option-min="10" option-max="99"></foo> <!-- => 58 -->  
+<foo j-init="random" j-data-min="10" j-data-max="99"></foo> <!-- => 58 -->  
 ````
 veya
 ```JS
 jSite('foo#bar').md('random');
 ```
 ```HTML
-<foo id="bar" option-min="10" option-max="99"></foo> <!-- => 14 -->
+<foo id="bar" j-data-min="10" j-data-max="99"></foo> <!-- => 14 -->
 ```
 veya
 ```JS
@@ -103,12 +103,12 @@ return array; // => ['0:head', '1:body', '2:bar', '3:bar']
 
 
 ##### options(only, except) => (mixed)
-Kümedeki ilk elemanın option niteliklerini dönderir.
+Kümedeki ilk elemanın j-data niteliklerini dönderir.
 
 
 ###### Örnek 1:
 ```HTML
-<tag option-foo="x" option-bar="y">
+<tag j-data-foo="x" j-data-bar="y">
 ```
 
 ```JS
@@ -124,14 +124,14 @@ jSite('tag').options(['foo'], true); // => { bar: 'y' }
 ###### Örnek 2:
 ```HTML
 <tag
-  option-foo-bar="1"
-  option-foo--bar="2"
-  option-foo---bar="3"
-  option-foo.bar="4"
-  option-foo.baz="5"
+  j-data-foo-bar="1"
+  j-data-foo--bar="2"
+  j-data-foo---bar="3"
+  j-data-foo.bar="4"
+  j-data-foo.baz="5"
 
-  option-qux="6"
-  option--qux="7"
+  j-data-qux="6"
+  j-data--qux="7"
 ></tag>
 ```
 
@@ -193,7 +193,7 @@ jSite('div.example').autoSlider();
 
 
 ```HTML
-<div class="example" option-min="1" option-max="9"></div>
+<div class="example" j-data-min="1" j-data-max="9"></div>
 ```
 
 
