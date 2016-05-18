@@ -413,6 +413,7 @@
                 jSite(function() {
                     that.observer = new MutationObserver(function(mutations) {
                         mutations.forEach(function(mutation) {
+                            var targetNode = mutation.target;
                             var addedNodes = Array.prototype.slice.call(mutation.addedNodes);
 
                             if (mutation.type === 'childList') {
@@ -423,16 +424,16 @@
                                 });
                             }
 
-                            if (mutation.type === 'attributes' && mutation.target.hasOwnProperty('module')) {
+                            if (mutation.type === 'attributes' && targetNode.module) {
                                 var match;
                                 if (match = mutation.attributeName.match(/^j-data-([_.:-a-z0-9]+)/i)) {
-                                    var module = mutation.target.module;
+                                    var module = targetNode.module;
 
                                     if (jSite.isFunction(module.onDataChange)) {
                                         var name = jSite.camelCase(match[1]);
-                                        var data = jSite(mutation.target).data(name);
+                                        var data = jSite(targetNode).data(name);
 
-                                        module.onDataChange.call(module, mutation.target, name, data);
+                                        module.onDataChange(targetNode, name, data);
                                     }
                                 }
                             }
@@ -468,8 +469,6 @@
                     return;
                 }
                 this.put(name, module);
-
-                module.instance = module.instance || {};
 
                 if (jSite.isFunction(module.onRegister)) {
                     module.onRegister.call(module);
@@ -515,24 +514,24 @@
                         : node.tagName.toLowerCase();
 
                 if (this.exists(name)) {
-                    this.compile(name, node, force);
+                    this.compile(node, name, force);
                 }
             },
 
-            compile: function(name, node, force) {
+            compile: function(node, name, force) {
                 var module = this.get(name);
 
-                if (node.isCompiled === true && force !== true) {
+                if (node.module && node.module.isCompiled === true && force !== true) {
                     return;
                 }
 
-                node.module = jSite.extend(true, Object.create(module.instance), module);
+                node.module = jSite.extend(true, {}, module);
 
-                if (jSite.isFunction(module.onCompile)) {
-                    module.onCompile.call(node.module, node);
+                if (jSite.isFunction(node.module.onCompile)) {
+                    node.module.onCompile(node);
                 }
 
-                node.isCompiled = true;
+                node.module.isCompiled = true;
             },
 
             put: function(name, module) {
@@ -556,8 +555,12 @@
         },
         fn: {
             md: function(name, force) {
-                this.each(function () {
-                    jSite.md.compile(this, name, force);
+                return this.each(function () {
+                    if (name) {
+                        jSite.md.compile(this, name, force);
+                    } else {
+                        jSite.md.compileNode(this, force);
+                    }
                 }, arguments)
             }
         }
