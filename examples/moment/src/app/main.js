@@ -2,6 +2,7 @@
     "use strict";
 
     jSite.md.extend({
+
         'moment': {
             onCompile: function(node) {
                 var instance =
@@ -17,19 +18,19 @@
                 node.innerHTML = instance;
             },
             onDataChange: function(node) {
-                this.md.onCompile.call(this.md, node);
+                this.onCompile(node);
             }
         },
+
         'duration': {
             onCompile: function(node) {
-                var data = jSite(node).data(
-                    ['seconds','minutes', 'hours', 'days', 'weeks', 'months', 'years']
-                );
+                var data = jSite(node).data();
                 node.innerHTML = moment.duration(data).humanize();
             },
             onDataChange: function(node) {
-                this.md.onCompile.call(this.md, node);
+                this.onCompile(node);
             }
         }
+        
     });
 })();

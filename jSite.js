@@ -428,11 +428,11 @@
                                 if (match = mutation.attributeName.match(/^j-data-([_.:-a-z0-9]+)/i)) {
                                     var module = mutation.target.module;
 
-                                    if (jSite.isFunction(module.md.onDataChange)) {
+                                    if (jSite.isFunction(module.onDataChange)) {
                                         var name = jSite.camelCase(match[1]);
                                         var data = jSite(mutation.target).data(name);
 
-                                        module.md.onDataChange.call(module, mutation.target, name, data);
+                                        module.onDataChange.call(module, mutation.target, name, data);
                                     }
                                 }
                             }
@@ -467,8 +467,9 @@
                 if (this.exists(name) && force !== true) {
                     return;
                 }
-
                 this.put(name, module);
+
+                module.instance = module.instance || {};
 
                 if (jSite.isFunction(module.onRegister)) {
                     module.onRegister.call(module);
@@ -507,8 +508,7 @@
                 });
             },
 
-            compileNode: function(node, force)
-            {
+            compileNode: function(node, force) {
                 var name =
                     node.attributes['j-bind']
                         ? node.attributes['j-bind'].value
@@ -526,8 +526,10 @@
                     return;
                 }
 
+                node.module = jSite.extend(true, Object.create(module.instance), module);
+
                 if (jSite.isFunction(module.onCompile)) {
-                    module.onCompile.call(node.module = { md: module }, node);
+                    module.onCompile.call(node.module, node);
                 }
 
                 node.isCompiled = true;
