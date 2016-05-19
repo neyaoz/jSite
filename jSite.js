@@ -238,10 +238,14 @@
             return jSite.type(obj) === 'function';
         },
         isEmpty: function(obj) {
-            if (obj === null) return true;
+            if (jSite.isUndefined(obj) || jSite.isNull(obj)) return true;
+            if (jSite.isNumeric(obj)) return obj === 0;
             if (jSite.isArray(obj) || jSite.isString(obj)) return obj.length === 0;
             for (var i in obj) if (obj.hasOwnProperty(i)) return false;
             return true;
+        },
+        isNull: function(obj) {
+            return obj === null;
         },
         isDefined: function(obj) {
             return obj !== void 0;
@@ -291,11 +295,10 @@
             if (typeof obj === 'string') {
                 try {
                     obj =
-                        obj === "true" ? true : obj === "false" ? false : obj === "null" ? null :
-                            // Only convert to a number if it doesn't change the string
-                            +obj + "" === obj ? +obj :
-                                /^(?:\{[\w\W]*}|\[[\w\W]*])$/.test(obj) ? JSON.parse(obj) :
-                                    obj;
+                        obj === 'undefined' ? undefined :  obj === 'null' ? null :
+                        obj === 'true' ? true : obj === 'false' ? false :
+                        obj === +obj + '' ? +obj :
+                        JSON.parse(obj);
                 } catch(e) {}
             }
 
