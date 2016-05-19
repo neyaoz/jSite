@@ -301,19 +301,23 @@
 
             return obj;
         },
-        setData: function(path, value) {
+        setData: function(obj, path, value) {
             if (jSite.isString(path)) {
                 path = path.split('.');
             }
 
-            var obj = {};
-            var target = obj;
+            var ref = obj;
 
-            for (var i = 0; i < path.length; i++) {
-                obj = (obj[path[i]] = i === path.length-1 ? value : {});
+            for (var i = 0; i < path.length; i++)
+            {
+                if (i !== path.length - 1) {
+                    ref = (ref[path[i]] = ref.hasOwnProperty(path[i]) ? ref[path[i]] : {});
+                } else {
+                    ref = (ref[path[i]] = value);
+                }
             }
 
-            return target;
+            return obj;
         },
         getData: function(obj, path) {
             if (jSite.isUndefined(obj) || jSite.isUndefined(path)) {
@@ -389,7 +393,7 @@
 
             jSite.each(this.get(0).attributes, function(i, attribute, match) {
                 if (match = attribute.name.match(/^j-data-([_.:-a-z0-9]+)/i)) {
-                    jSite.extend(true, data, jSite.setData(jSite.camelCase(match[1]), jSite.parseData(attribute.value)));
+                    jSite.setData(data, jSite.camelCase(match[1]), jSite.parseData(attribute.value))
                 }
             });
 
@@ -464,11 +468,33 @@
                 if (this.exists(name) && force !== true) {
                     return;
                 }
+
+                module =
+                    jSite.extend(
+                        true,
+                        {
+                            data: {},
+                            isRegistered: false,
+                            isBooted: false,
+                            onRegister: function() {},
+                            onBoot: function() {},
+
+                            prototype:
+                            {
+                                data: {},
+                                node: null,
+                                isCompiled: false,
+                                onCompile: function() {},
+                                onDataChange: function() {}
+                            }
+                        },
+                        module
+                    );
+                module.prototype.static = module;
+
                 this.put(name, module);
 
-                if (jSite.isFunction(module.onRegister)) {
-                    module.onRegister.call(module);
-                }
+                module.onRegister.call(module);
                 module.isRegistered = true;
             },
 
@@ -489,9 +515,7 @@
                     return;
                 }
 
-                if (jSite.isFunction(module.onBoot)) {
-                    module.onBoot.call(module);
-                }
+                module.onBoot.call(module);
                 module.isBooted = true;
             },
 
@@ -521,20 +545,21 @@
                     return;
                 }
 
-                node.module = jSite.extend(true, {}, module);
+                node.module = Object.create(module.prototype);
+                node.module.data = jSite.extend(
+                    true, {}, node.module.static.data, jSite(node).data()
+                );
                 node.module.node = node;
-
-                if (jSite.isFunction(node.module.onCompile)) {
-                    node.module.onCompile(node, module);
-                }
-
+                
+                node.module.onCompile(node, node.module.data, node.module.static);
                 node.module.isCompiled = true;
             },
 
             dataChange: function(node, name, data) {
-                if (jSite.isFunction(node.module.onDataChange)) {
-                    node.module.onDataChange(node, name, data);
-                }
+                var module = node.module;
+
+                jSite.setData(module.data, name, data);
+                module.onDataChange(node, name, data);
             },
 
             put: function(name, module) {

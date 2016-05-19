@@ -21,18 +21,24 @@ DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
 ```JS
 jSite.md.extend({
   random: {
-    onCompile: function(node) {
-      this.node = node;
-      this.rand = function(data) {
-        var min = options.min || 0;
-        var max = options.max || 100;
-        this.node.innerHTML = Math.floor(Math.random() * (max - min)) + min
-      };
-
-      this.rand(jSite(node).data());
+    data: {
+      min: 0,
+      max: 100
     },
-    onDataChange: function(node) {
-      this.rand(jSite(node).data());
+    onRegister: function() {},
+    onBoot: function() {},
+
+    prototype: {
+      data: {},
+      rand: function() {
+        this.node.innerHTML = Math.floor(Math.random() * (this.data.max - this.data.min)) + this.data.min
+      },
+      onCompile: function(node, data, module) {
+        this.rand();
+      },
+      onDataChange: function(node, name, data) {
+        this.rand();
+      }
     }
   }
 });
