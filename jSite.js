@@ -427,14 +427,10 @@
                             if (mutation.type === 'attributes' && targetNode.module) {
                                 var match;
                                 if (match = mutation.attributeName.match(/^j-data-([_.:-a-z0-9]+)/i)) {
-                                    var module = targetNode.module;
+                                    var name = jSite.camelCase(match[1]);
+                                    var data = jSite(targetNode).data(name);
 
-                                    if (jSite.isFunction(module.onDataChange)) {
-                                        var name = jSite.camelCase(match[1]);
-                                        var data = jSite(targetNode).data(name);
-
-                                        module.onDataChange(targetNode, name, data);
-                                    }
+                                    jSite.md.dataChange(targetNode, name, data);
                                 }
                             }
                         });
@@ -526,12 +522,19 @@
                 }
 
                 node.module = jSite.extend(true, {}, module);
+                node.module.node = node;
 
                 if (jSite.isFunction(node.module.onCompile)) {
-                    node.module.onCompile(node);
+                    node.module.onCompile(node, module);
                 }
 
                 node.module.isCompiled = true;
+            },
+
+            dataChange: function(node, name, data) {
+                if (jSite.isFunction(node.module.onDataChange)) {
+                    node.module.onDataChange(node, name, data);
+                }
             },
 
             put: function(name, module) {

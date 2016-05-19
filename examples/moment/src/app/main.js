@@ -4,18 +4,19 @@
     jSite.md.extend({
 
         'moment': {
+            data: {},
             onCompile: function(node) {
-                var instance =
-                    moment(jSite(node).data('parse'));
+                jSite.extend(this.data, jSite(node).data());
 
-                jSite.each(jSite(node).data(), function(name, args) {
-                    args = args || void 0;
+                this.moment = moment(this.data.parse);
 
-                    if (jSite.isFunction(instance[name]))
-                        instance = instance[name](args);
-                });
+                jSite.each(this.data, function(name, args) {
+                    if (jSite.isFunction(this.moment[name])) {
+                        this.moment = this.moment[name](args);
+                    }
+                }.bind(this));
 
-                node.innerHTML = instance;
+                node.innerHTML = this.moment;
             },
             onDataChange: function(node) {
                 this.onCompile(node);
@@ -23,9 +24,10 @@
         },
 
         'duration': {
+            data: {},
             onCompile: function(node) {
-                var data = jSite(node).data();
-                node.innerHTML = moment.duration(data).humanize();
+                jSite.extend(this.data, jSite(node).data());
+                node.innerHTML = moment.duration(this.data).humanize();
             },
             onDataChange: function(node) {
                 this.onCompile(node);
