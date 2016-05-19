@@ -260,7 +260,7 @@ jSite.getOnly(obj, [foo], true); // => [ bar: 'y' ]
 
 
 #### Yardımcı Metotları Genişletme
-Gerekli olduğu durumlarda özel yardımcı metotlar tanımlanarak kütüphane genişletilebilir. Bunun için ***jSite.extend*** yardımcı metodu kullanılır.
+Özel yardımcı metotlar tanımlanarak kütüphane genişletilebilir. Bunun için ***jSite.extend*** yardımcı metodu kullanılır.
 
 ```JS
 jSite.extend({
@@ -277,8 +277,8 @@ jSite.log('it is logged!')
 ```
 
 
-### DOM Fonksiyonları
-DOM fonksiyonları, jSite örneği aracılığıyla çağırılan ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır.
+## DOM Fonksiyonları
+DOM fonksiyonları, jSite instance'ı aracılığıyla çağırılan, girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır.
 
 ```JS
 jSite('body').each(function(index, element, instance) {
@@ -286,7 +286,7 @@ jSite('body').each(function(index, element, instance) {
 });
 ```
 
-DOM elementleri farklı şekillerde kümelenebilir.
+DOM elementleri farklı şekillerde kümelenerek jSite instance'ı üretilebilir.
 
 ```JS
 jSite( document ); // => [document]
@@ -364,7 +364,7 @@ jSite('tag').data(); /* =>
 
 
 #### DOM Fonksiyonlarını Genişletme
-Gerekli olduğu durumlarda özel DOM fonksiyonları tanımlanarak kütüphane genişletilebilir. Bunun için ***jSite.fn.extend*** yardımcı metodu kullanılır.
+Özel DOM fonksiyonları tanımlanarak kütüphane genişletilebilir. Bunun için ***jSite.fn.extend*** yardımcı metodu kullanılır.
 
 ###### Örnek 1:
 ```JS
@@ -380,7 +380,7 @@ jSite('foo#example').changeID('bar'); // => <foo id="bar">
 ```
 
 
-Ayrıca DOM fonksiyonlarını, başka pluginleri elemente bağlamak için de kullanabilirsiniz.
+Ayrıca DOM fonksiyonları, başka pluginleri element ile ilişkilendirmek için de kullanılabilir.
 
 ###### Örnek 2:
 ```JS
@@ -394,7 +394,7 @@ jSite.fn.extend({
 });
 ```
 
-Yaptığınız bu tanımlama ile oluşan **autoSlider*** DOM fonksiyonunu kullanarak, jQuery UI Slider aracının elementin j-data attribute'lerinde belirtilen değerler ile çağırılmasını sağlayabilirsiniz.
+Yapılan bu tanımlama ile oluşan **autoSlider*** DOM fonksiyonu kullanılarak, jQuery UI Slider plugin'inin, elementin j-data attribute'lerinde belirtilen değerler ile çalıştırılması sağlanabilir.
 
 ```HTML
   <div class="example" j-data-min="1" j-data-max="9"></div>
@@ -406,27 +406,25 @@ Yaptığınız bu tanımlama ile oluşan **autoSlider*** DOM fonksiyonunu kullan
 
 
 ## DOM Modülleri
-DOM modülleri, semantik DOM elementlerine otomatik olarak bağlanan, istenildiğinde jSite örneği aracılığıyla da çağırılabilen ve girilen argümanları element kümesine uygulayıp yanıt dönen metotlardır. DOM fonksiyonlarından daha gelişmiş olan bu yapının register, boot, compile ve mutation desteği vardır. Genişletilirken tanımlanan **onRegister** veya **onBoot** metodları aracılığıyla önyükleme sırasında istenilen işlemler yapılabilir.
+...
 
 
 #### DOM Modüllerini Genişletme
-DOM modüllerini jSite.md.extend() ile genişletebilirsiniz.
+Özel DOM modülleri tanımlanarak kütüphane genişletilebilir. Bunun için ***jSite.md.extend*** yardımcı metodu kullanılır.
 
 ###### Örnek 1:
 ```JS
 jSite.md.extend({
   random: {
-    data: {
-      min: 0,
-      max: 100
-    },
+    data: { min: 0, max: 100 },
     onRegister: function() {},
     onBoot: function() {},
 
     prototype: {
       data: {},
       rand: function() {
-        this.node.innerHTML = Math.floor(Math.random() * (this.data.max - this.data.min)) + this.data.min
+        this.node.innerHTML =
+        	Math.floor(Math.random() * (this.data.max - this.data.min)) + this.data.min
       },
       onCompile: function(node, data, module) {
         this.rand();
@@ -439,7 +437,9 @@ jSite.md.extend({
 });
 ```
 
-Yaptığınız bu tanımlama ile oluşan **random** DOM modülü, tüm \<random\> elementlerinde veya [j-bind=random] niteliğine sahip elementlerde otomatik olarak çağırabilir; dilerseniz de manuel olarak bir elemente bağlayabilirsiniz.
+
+...
+
 
 ```HTML
 <random j-data-min="10" j-data-max="99"></random> <!-- => 64 -->
