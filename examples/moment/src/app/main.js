@@ -5,7 +5,7 @@
 
         'moment': {
             prototype: {
-                onCompile: function(node, data, module) {
+                onBind: function(node, data, module) {
                     var m = moment(this.data.parse);
 
                     jSite.each(this.data, function(name, args) {
@@ -24,7 +24,7 @@
 
         'duration': {
             prototype: {
-                onCompile: function(node, data, module) {
+                onBind: function(node, data, module) {
                     this.node.innerHTML = moment.duration(this.data).humanize();
                 },
                 onDataChange: function(node, name, data) {

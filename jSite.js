@@ -220,6 +220,9 @@
                         return true;
             return false;
         },
+        toArray: function(obj, start, end) {
+            return Array.prototype.slice.call(obj, start, end);
+        },
         isArrayLike: function(obj) {
             if (obj && jSite.isObject(obj))
                 return jSite.isArray(obj) || obj.length === 0 || typeof obj.length === "number" && obj.length > 0 && (obj.length-1) in obj;
@@ -408,16 +411,10 @@
         md: {
             all: {},
             observer: null,
-
-            extend: function() {
-                this.registerAll(jSite.extend.apply({}, Array.prototype.slice.call(arguments)));
-                return this.all;
-            },
-
             init: function() {
                 var that = this;
 
-                jSite(function() {
+                jSite.ready(function() {
                     that.observer = new MutationObserver(function(mutations) {
                         mutations.forEach(function(mutation) {
                             var targetNode = mutation.target;
@@ -426,7 +423,7 @@
                             if (mutation.type === 'childList') {
                                 addedNodes.forEach(function(node) {
                                     if (jSite.isElement(node)) {
-                                        jSite.md.compileNode(node);
+                                        that.bindNode(node);
                                     }
                                 });
                             }
@@ -437,7 +434,7 @@
                                     var name = jSite.camelCase(match[1]);
                                     var data = jSite(targetNode).data(name);
 
-                                    jSite.md.dataChange(targetNode, name, data);
+                                    that.dataChange(targetNode, name, data);
                                 }
                             }
                         });
@@ -451,32 +448,112 @@
                     });
                 });
             },
+            ready: function (callback) {
+                jSite.ready(callback.bind(this));
+            },
+            registerAll: function() {
+                this.each(function(name) {
+                    this.register(name);
+                });
 
-            registerAll: function(cluster) {
-                for(var k in cluster) {
-                    if (cluster.hasOwnProperty(k)) {
-                        this.register(k, cluster[k]);
-                    }
-                }
-
-                var that = this;
-
-                jSite.ready(function() {
-                    that.bootAll(cluster);
-                    that.compileContext(document);
+                this.ready(function() {
+                    this.bindContext();
                 });
             },
+            register: function(name, force) {
+                var module = this.get(name);
 
-            register: function(name, module, force) {
-                if (this.exists(name) && force !== true) {
+                if (module.isRegistered && force !== true) {
                     return;
                 }
 
+                module.onRegister();
+                module.isRegistered = true;
+
+                if (! module.isDeferred) {
+                    this.ready(function() {
+                        this.boot(name);
+                    });
+                }
+            },
+            boot: function(name, force) {
+                var module = this.get(name);
+
+                if (module.isBooted && force !== true) {
+                    return;
+                }
+
+                module.onBoot();
+                module.isBooted = true;
+            },
+            bindContext: function(context, force) {
+                var that = this;
+                jSite('*', context).each(function() {
+                    that.bindNode(this, force);
+                });
+            },
+            bindNode: function(node, force) {
+                var name =
+                    node.attributes['j-bind']
+                        ? node.attributes['j-bind'].value
+                        : node.tagName.toLowerCase();
+
+                if (this.has(name)) {
+                    this.bind(node, name, force);
+                }
+            },
+            bind: function(node, name, force) {
+                var module = this.get(name);
+
+                if (node.module && node.module.isCompiled && force !== true) {
+                    return;
+                }
+
+                if (module.isDeferred) {
+                    this.boot(name);
+                }
+
+                node.module = Object.create(
+                    module.prototype,
+                    {
+                        node: {
+                            value: node
+                        },
+                        data: {
+                            value: jSite.extend(true, {}, {}, module.data, jSite(node).data())
+                        }
+                    }
+                );
+
+                node.module.onBind(node, node.module.data, node.module.static);
+                node.module.isBinded = true;
+            },
+            dataChange: function(node, name, data) {
+                var module = node.module;
+
+                jSite.setData(module.data, name, data);
+                module.onDataChange(node, name, data);
+            },
+            extend: function() {
+                var that = this;
+                var modules = jSite.extend.apply(
+                    {}, jSite.toArray(arguments)
+                );
+
+                jSite.each(modules, function(name, module) {
+                    that.put(name, that.create(module));
+                });
+
+                this.registerAll();
+                return this.all;
+            },
+            create: function(module) {
                 module =
                     jSite.extend(
                         true,
                         {
                             data: {},
+                            isDeferred: false,
                             isRegistered: false,
                             isBooted: false,
                             onRegister: function() {},
@@ -486,8 +563,8 @@
                             {
                                 data: {},
                                 node: null,
-                                isCompiled: false,
-                                onCompile: function() {},
+                                isBinded: false,
+                                onBind: function() {},
                                 onDataChange: function() {}
                             }
                         },
@@ -495,102 +572,35 @@
                     );
                 module.prototype.static = module;
 
-                this.put(name, module);
-
-                module.onRegister.call(module);
-                module.isRegistered = true;
+                return module;
             },
-
-            bootAll: function(cluster) {
-                for(var k in cluster) {
-                    if (cluster.hasOwnProperty(k)) {
-                        this.boot(k);
-                    }
-                }
-
-                this.compileContext();
-            },
-
-            boot: function(name, force) {
-                var module = this.get(name);
-
-                if (module.isBooted === true && force !== true) {
-                    return;
-                }
-
-                module.onBoot.call(module);
-                module.isBooted = true;
-            },
-
-            compileContext: function(context, force) {
-                var that = this;
-
-                jSite('*', context).each(function() {
-                    that.compileNode(this, force);
-                });
-            },
-
-            compileNode: function(node, force) {
-                var name =
-                    node.attributes['j-bind']
-                        ? node.attributes['j-bind'].value
-                        : node.tagName.toLowerCase();
-
-                if (this.exists(name)) {
-                    this.compile(node, name, force);
-                }
-            },
-
-            compile: function(node, name, force) {
-                var module = this.get(name);
-
-                if (node.module && node.module.isCompiled === true && force !== true) {
-                    return;
-                }
-
-                node.module = Object.create(module.prototype);
-                node.module.data = jSite.extend(
-                    true, {}, node.module.static.data, jSite(node).data()
-                );
-                node.module.node = node;
-                
-                node.module.onCompile(node, node.module.data, node.module.static);
-                node.module.isCompiled = true;
-            },
-
-            dataChange: function(node, name, data) {
-                var module = node.module;
-
-                jSite.setData(module.data, name, data);
-                module.onDataChange(node, name, data);
-            },
-
             put: function(name, module) {
                 return this.all[name] = module;
             },
-
             get: function(name) {
-                this.require(name);
+                this.has(name, true);
                 return this.all[name];
             },
-
-            require: function(name) {
-                if (! this.exists(name)) {
-                    jSite.error('jSite does not contain a module named <' + name + '>')
+            has: function(name, throwable) {
+                if (this.all.hasOwnProperty(name)) {
+                    return true;
                 }
+                if (throwable === true) {
+                    jSite.error('jSite does not contain a module named <' + name + '>');
+                }
+                return false;
             },
-
-            exists: function(name) {
-                return this.all.hasOwnProperty(name);
+            each: function(callback) {
+                return jSite.each(this.all, callback.bind(this));
             }
         },
         fn: {
             md: function(name, force) {
                 return this.each(function () {
                     if (name) {
-                        jSite.md.compile(this, name, force);
+                        jSite.md.bind(this, name, force);
                     } else {
-                        jSite.md.compileNode(this, force);
+                        jSite.md.bindNode(this, force);
                     }
                 }, arguments)
             }
