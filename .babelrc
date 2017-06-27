@@ -1,0 +1,8 @@
+{
+  "presets": ["env", "flow"],
+  "plugins": ["syntax-jsx"],
+  "ignore": [
+    "dist/*.js",
+    "packages/**/*.js"
+  ]
+}

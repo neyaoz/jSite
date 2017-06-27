@@ -1,3 +1,5 @@
-.DS_Store
 .idea
-.dev
+.DS_STORE
+node_modules
+dist/
+!src/node_modules
