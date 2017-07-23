@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 ;(function (global, factory) {
   'use strict';
 
@@ -90,21 +91,10 @@
                   value = isArrayClone ? [] : {};
                 }
 
-                if (jSite.isArrayLike(value) && isArrayClone) {
-                  clone = jSite.merge([], value, clone);
-                }
-
                 // Never move original objects, clone them
                 target[j] = jSite.extend(true, value, clone);
               } else if (typeof clone !== 'undefined') { // Don't bring in undefined values
-                if (
-                  Object.prototype.toString.call(target) === '[object Array]' &&
-                  Object.prototype.toString.call(object) === '[object Array]'
-                ) {
-                  jSite.merge(target, i);
-                } else {
-                  target[j] = clone;
-                }
+                target[j] = clone;
               }
             }
           }
@@ -508,13 +498,13 @@
 
       return obj;
     },
-    getter: function (obj, notation) {
-      if (jSite.isString(notation)) {
-        notation = notation.split('.');
+    getter: function (obj, path) {
+      if (jSite.isString(path)) {
+        path = path.split('.');
       }
 
-      if (jSite.isArray(notation) && notation.length) {
-        jSite.each(notation, function (i, path) {
+      if (jSite.isArray(path) && path.length) {
+        jSite.each(path, function (i, path) {
           if (jSite.isObject(obj) && obj.hasOwnProperty(path)) {
             obj = obj[path];
             return true;
@@ -527,13 +517,13 @@
 
       return obj;
     },
-    setter: function (obj, notation, value) {
-      if (jSite.isString(notation)) {
-        notation = notation.split('.');
+    setter: function (obj, path, value) {
+      if (jSite.isString(path)) {
+        path = path.split('.');
       }
 
-      if (jSite.isArray(notation) && notation.length) {
-        value = jSite.filler(notation, value);
+      if (jSite.isArray(path) && path.length) {
+        value = jSite.filler(path, value);
       }
 
       jSite.extend(true, obj, value);
@@ -543,15 +533,19 @@
     filler: function (path, data) {
       if (jSite.isString(path)) {
         path = path.split(/\.+/);
+      } else {
+        path = [].concat(path);
       }
 
       let map = {}, ref = map;
       jSite.each(path, function (i, step) {
         let push;
 
-        step = step.split(/\[\]$/);
-        push = step.length > 1;
-        step = step[0] || null;
+        if (!jSite.isNull(step)) {
+          step = step.split(/\[\]$/);
+          push = step.length > 1;
+          step = step[0] || null;
+        }
 
         if (step) {
           if (i < path.length - 1) {
@@ -561,10 +555,10 @@
           }
         } else {
           if (i === 0) {
-            ref = map = push ? [] : data;
+            map = ref = [];
           }
-          if (i === path.length - 1) {
-            ref = push ? jSite.merge(ref, [data]) : ref;
+          if (path.length === 1) {
+            map = ref = push ? [data] : data;
           }
         }
       });
@@ -628,6 +622,8 @@
     fn: {
       data: function () {
         const data = {};
+        const dataShared = {};
+        const dataModule = {};
 
         this.each(function () {
           const attributes =
@@ -639,11 +635,23 @@
             const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
 
             if (!jSite.isNull(match)) {
-              const notation = match.slice(1).filter(function (match) {
-                return !jSite.isNull(match) && match !== '';
-              }).join('.');
+              let path, data;
 
-              jSite.setter(data, jSite.dashUpperFirst(notation), jSite.parser(attr.value));
+              if (match[1]) {
+                data = dataModule;
+              }
+
+              if (match[2]) {
+                jSite.setter(data, jSite.dashUpperFirst(''), jSite.parser(attr.value));
+              } else {
+                // js:="" js@ModuleA:="" data-js:="" data-js@ModuleA:=""
+                try {
+                  jSite.extend(true, data, JSON.parse(attr.value));
+                } catch (e) {
+                  console.error(attr);
+                  throw e;
+                }
+              }
             }
           });
         });
