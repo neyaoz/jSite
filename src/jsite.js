@@ -90,10 +90,21 @@
                   value = isArrayClone ? [] : {};
                 }
 
+                if (jSite.isArrayLike(value) && isArrayClone) {
+                  clone = jSite.merge([], value, clone);
+                }
+
                 // Never move original objects, clone them
                 target[j] = jSite.extend(true, value, clone);
               } else if (typeof clone !== 'undefined') { // Don't bring in undefined values
-                target[j] = clone;
+                if (
+                  Object.prototype.toString.call(target) === '[object Array]' &&
+                  Object.prototype.toString.call(object) === '[object Array]'
+                ) {
+                  jSite.merge(target, i);
+                } else {
+                  target[j] = clone;
+                }
               }
             }
           }
@@ -525,7 +536,6 @@
         value = jSite.filler(notation, value);
       }
 
-      // todo [] icin array merge yapilacak (sadece en sondaki [] calismiyor array replace yapiyor merge yapacak)
       jSite.extend(true, obj, value);
 
       return obj;
@@ -541,12 +551,21 @@
 
         step = step.split(/\[\]$/);
         push = step.length > 1;
-        step = step[0];
+        step = step[0] || null;
 
-        if (i < path.length - 1) {
-          ref = ref[step] = push ? [] : {};
+        if (step) {
+          if (i < path.length - 1) {
+            ref = ref[step] = push ? [] : {};
+          } else {
+            ref = ref[step] = push ? [data] : data;
+          }
         } else {
-          ref = ref[step] = push ? [data] : data;
+          if (i === 0) {
+            ref = map = push ? [] : data;
+          }
+          if (i === path.length - 1) {
+            ref = push ? jSite.merge(ref, [data]) : ref;
+          }
         }
       });
 
@@ -609,26 +628,27 @@
     fn: {
       data: function () {
         const data = {};
-        const attributes = jSite.toArray(this.get(0).attributes);
 
-        attributes.sort(function (a, b) {
-          return a.name.localeCompare(b.name);
+        this.each(function () {
+          const attributes =
+            jSite.toArray(this.attributes).sort(function (a, b) {
+              return a.name.localeCompare(b.name);
+            });
+
+          jSite.each(attributes, function (i, attr) {
+            const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
+
+            if (!jSite.isNull(match)) {
+              const notation = match.slice(1).filter(function (match) {
+                return !jSite.isNull(match) && match !== '';
+              }).join('.');
+
+              jSite.setter(data, jSite.dashUpperFirst(notation), jSite.parser(attr.value));
+            }
+          });
         });
 
-        jSite.each(attributes, function (i, attr) {
-          const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
-          if (!jSite.isNull(match)) {
-            const notation = match.slice(1).filter(function (match) {
-              return !jSite.isNull(match) && match !== '';
-            }).join('.');
-
-            jSite.setter(data, jSite.dashUpperFirst(notation), attr.value);
-          }
-        });
-
-        console.log(data);
-
-        return jSite.toArray(this[0].attributes);
+        return data;
       },
       dataMap: function () {
         return this.map(function () {
