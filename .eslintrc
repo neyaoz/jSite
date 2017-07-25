@@ -12,6 +12,7 @@
     "max-len": ["error", 120],
     "no-bitwise": "off",
     "no-cond-assign": "off",
+    "no-empty": "off",
     "no-extra-semi": "off",
     "no-multi-assign": "off",
     "no-new-object": "off",

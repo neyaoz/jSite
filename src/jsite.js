@@ -1,4 +1,3 @@
-/* eslint-disable no-empty */
 ;(function (global, factory) {
   'use strict';
 
@@ -625,47 +624,82 @@
       });
     },
 
+    dataProp: function (attributes) {
+      attributes = jSite.toArray(attributes).sort(function (a, b) {
+        return a.name.localeCompare(b.name);
+      });
+
+      let data = {};
+      jSite.each(attributes, function (i, attr) {
+        const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
+
+        if (!jSite.isNull(match)) {
+          if (match[1]) {
+            // js@ModuleA data-js@ModuleA
+          }
+
+          if (match[2]) {
+            jSite.setter(data, jSite.dashUpperFirst(match[2]), jSite.parser(attr.value));
+          } else {
+            // js:="" js@ModuleA:="" data-js:="" data-js@ModuleA:=""
+            try {
+              jSite.setter(data, null, JSON.parse(attr.value));
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.error(attr);
+              throw e;
+            }
+          }
+        }
+      });
+
+      return data;
+    },
+
     fn: {
-      data: function (only, invert) {
+      dataProp: function () {
         let data = {};
 
         this.each(function () {
-          const attributes =
-            jSite.toArray(this.attributes).sort(function (a, b) {
-              return a.name.localeCompare(b.name);
-            });
-
-          jSite.each(attributes, function (i, attr) {
-            const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
-
-            if (!jSite.isNull(match)) {
-              if (match[1]) {
-                // js@ModuleA data-js@ModuleA
-              }
-
-              if (match[2]) {
-                jSite.setter(data, jSite.dashUpperFirst(match[2]), jSite.parser(attr.value));
-              } else {
-                // js:="" js@ModuleA:="" data-js:="" data-js@ModuleA:=""
-                try {
-                  jSite.setter(data, null, JSON.parse(attr.value));
-                } catch (e) {
-                  // eslint-disable-next-line no-console
-                  console.error(attr);
-                  throw e;
-                }
-              }
-            }
-          });
+          jSite.setter(data, null, jSite.dataProp(this.attributes));
         });
-
-        data = jSite.only(data, only, invert);
 
         return data;
       },
       dataEach: function () {
         return this.map(function () {
           return jSite(this).data();
+        });
+      },
+    },
+  });
+
+  jSite.extend(true, {
+    fn: {
+      observe: function (callback, options) {
+        options =
+          jSite.extend(
+            {
+              attributeOldValue: true,
+              attributes: true,
+              characterData: true,
+              characterDataOldValue: true,
+              childList: true,
+              subtree: true,
+            },
+            options,
+          );
+
+        return this.each(function () {
+          const node = this;
+
+          if (jSite.isNull(node.observer)) {
+            node.observer = new MutationObserver(function () {
+              callback.apply(node, jSite.toArray(arguments));
+            });
+          }
+
+          node.observer.observe(node, options);
         });
       },
     },
@@ -713,37 +747,6 @@
   });
 
   jSite.extend(true, {
-    fn: {
-      observe: function (callback, options) {
-        options =
-          jSite.extend(
-            {
-              attributeOldValue: true,
-              attributes: true,
-              characterData: true,
-              characterDataOldValue: true,
-              childList: true,
-              subtree: true,
-            },
-            options,
-          );
-
-        return this.each(function () {
-          const node = this;
-
-          if (jSite.isNull(node.observer)) {
-            node.observer = new MutationObserver(function () {
-              callback.apply(node, jSite.toArray(arguments));
-            });
-          }
-
-          node.observer.observe(node, options);
-        });
-      },
-    },
-  });
-
-  jSite.extend(true, {
     md: {
       create: function (module) {
         module =
@@ -784,15 +787,19 @@
               }
 
               if (mutation.type === 'attributes' && targetNode.module) {
-                if (mutation.attributeName.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui)) {
-                  jSite.md.dataChange(targetNode);
+                const attr = targetNode.getAttributeNode(mutation.attributeName);
+                if (!jSite.isNull(attr)) {
+                  const data = jSite.dataProp([attr]);
+
+                  if (!jSite.isEmptyObject(data)) {
+                    jSite.md.dataChange(targetNode, data);
+                  }
                 }
               }
             });
           });
         });
       },
-
       boot: function (module, force) {
         if (jSite.isString(module)) {
           module = jSite.md.get(module);
@@ -809,7 +816,6 @@
           }
         }
       },
-
       load: function (module, force) {
         if (jSite.isString(module)) {
           module = this.get(module);
@@ -834,7 +840,6 @@
           jSite.md.bindNode(this, force);
         });
       },
-
       bindNode: function (node, force) {
         const module = node.getAttribute('js') || node.getAttribute('data-js') || node.tagName.toLowerCase();
 
@@ -842,7 +847,6 @@
           jSite.md.bind(node, module, force);
         }
       },
-
       bind: function (node, module, force) {
         if (jSite.isString(module)) {
           module = this.get(module);
@@ -856,7 +860,7 @@
           node.module =
             jSite.extend(true, {}, module.prototype,
               {
-                data: jSite(node).data(),
+                data: jSite(node).dataProp(),
                 isBinded: true,
               },
             );
@@ -866,9 +870,12 @@
           node.module.onBind(node, node.module.data);
         }
       },
+      dataChange: function (node, nextData) {
+        const prevData = node.module.data;
 
-      dataChange: function (node) {
-        node.module.onDataChange(node);
+        if (node.module.onDataChange(node, nextData, prevData) !== false) {
+          jSite.extend(true, prevData, nextData);
+        }
       },
 
       all: {},
