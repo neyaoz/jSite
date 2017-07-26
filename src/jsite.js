@@ -770,33 +770,47 @@
 
         return module;
       },
+      extend: function (modules) {
+        jSite.each(modules, function (name, module) {
+          // Pure Modules as a function
+          if (jSite.isFunction(module)) {
+            module = jSite.md.create({
+              prototype: {
+                onBind: module,
+              },
+            });
+          }
+
+          module = jSite.extend(true, jSite.md.all[name], module);
+          module = jSite.md.create(module);
+
+          jSite.md.put(name, module).boot(name);
+        });
+
+        return this;
+      },
 
       init: function () {
         jSite.ready(function () {
+          jSite.md.bindContext();
+
           jSite(document).observe(function (mutations) {
             mutations.forEach(function (mutation) {
-              const targetNode = mutation.target;
-              const addedNodes = jSite.toArray(mutation.addedNodes);
+              const nodeMap = jSite.toArray(mutation.addedNodes);
 
               if (mutation.type === 'childList') {
-                addedNodes.forEach(function (node) {
+                nodeMap.forEach(function (node) {
                   if (jSite.isElement(node)) {
                     jSite.md.bindNode(node);
                   }
                 });
               }
-
-              if (mutation.type === 'attributes' && targetNode.module) {
-                const attr = targetNode.getAttributeNode(mutation.attributeName);
-                if (!jSite.isNull(attr)) {
-                  const data = jSite.dataProp([attr]);
-
-                  if (!jSite.isEmptyObject(data)) {
-                    jSite.md.dataChange(targetNode, data);
-                  }
-                }
-              }
             });
+          }, {
+            attributeOldValue: false,
+            attributes: false,
+            characterData: false,
+            characterDataOldValue: false,
           });
         });
       },
@@ -828,10 +842,6 @@
         if (!module.isLoaded || force) {
           module.onLoad();
           module.isLoaded = true;
-
-          jSite.ready(function () {
-            jSite.md.bindContext();
-          });
         }
       },
 
@@ -868,6 +878,28 @@
           node.module.node = node;
           node.module.static = module;
           node.module.onBind(node, node.module.data);
+
+          jSite(node).observe(function (mutations) {
+            mutations.forEach(function (mutation) {
+              const node = mutation.target;
+              const attr = node.getAttributeNode(mutation.attributeName);
+
+              if (mutation.type === 'attributes' && node.module) {
+                if (!jSite.isNull(attr)) {
+                  const data = jSite.dataProp([attr]);
+
+                  if (!jSite.isEmptyObject(data)) {
+                    jSite.md.dataChange(node, data);
+                  }
+                }
+              }
+            });
+          }, {
+            characterData: false,
+            characterDataOldValue: false,
+            childList: false,
+            subtree: false,
+          });
         }
       },
       dataChange: function (node, nextData) {
@@ -902,28 +934,8 @@
 
         return this;
       },
-
       each: function (callback) {
         return jSite.each(jSite.md.all, callback);
-      },
-      extend: function (modules) {
-        jSite.each(modules, function (name, module) {
-          // Pure Modules as a function
-          if (jSite.isFunction(module)) {
-            module = jSite.md.create({
-              prototype: {
-                onBind: module,
-              },
-            });
-          }
-
-          module = jSite.extend(true, jSite.md.all[name], module);
-          module = jSite.md.create(module);
-
-          jSite.md.put(name, module).boot(name);
-        });
-
-        return this;
       },
     },
 
