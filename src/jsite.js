@@ -624,7 +624,7 @@
       });
     },
 
-    dataProp: function (attributes) {
+    stub: function (attributes) {
       attributes = jSite.toArray(attributes).sort(function (a, b) {
         return a.name.localeCompare(b.name);
       });
@@ -657,7 +657,7 @@
     },
 
     fn: {
-      uid: function () {
+      unid: function () {
         let uid = null;
 
         this.each(function () {
@@ -672,19 +672,74 @@
 
         return uid;
       },
-      dataProp: function () {
+      attr: function (name, data) {
+        if (jSite.isUndefined(data)) {
+          let attr = null;
+          this.first().each(function () {
+            attr = this.getAttribute(name);
+          });
+
+          return attr;
+        }
+
+        this.each(function () {
+          if (jSite.isNull(data)) {
+            this.removeAttribute(name);
+          } else {
+            this.setAttribute(name, data);
+          }
+        });
+
+        return this;
+      },
+      prop: function (name, data) {
+        if (jSite.isUndefined(data)) {
+          let prop = null;
+          this.first().each(function () {
+            prop = this[name];
+          });
+
+          return prop;
+        }
+
+        this.each(function () {
+          if (jSite.isNull(data)) {
+            delete this[name];
+          } else {
+            this[name] = jSite.parser(data);
+          }
+        });
+
+        return this;
+      },
+      data: function (name, data) {
+        if (jSite.isUndefined(data)) {
+          let prop = null;
+          this.first().each(function () {
+            prop = this.dataset[name];
+          });
+
+          return prop;
+        }
+
+        this.each(function () {
+          if (jSite.isNull(data)) {
+            delete this.dataset[name];
+          } else {
+            this.dataset[name] = jSite.parser(data);
+          }
+        });
+
+        return this;
+      },
+      stub: function () {
         let data = {};
 
         this.each(function () {
-          jSite.setter(data, null, jSite.dataProp(this.attributes));
+          jSite.setter(data, null, jSite.stub(this.attributes));
         });
 
         return data;
-      },
-      dataEach: function () {
-        return this.map(function () {
-          return jSite(this).data();
-        });
       },
     },
   });
@@ -707,14 +762,14 @@
 
         return this.each(function () {
           const node = this;
+          const observer = new MutationObserver(function () {
+            callback.apply(node, jSite.toArray(arguments));
+          });
 
-          if (jSite.isNull(node.observer)) {
-            node.observer = new MutationObserver(function () {
-              callback.apply(node, jSite.toArray(arguments));
-            });
-          }
+          observer.observe(node, options);
 
-          node.observer.observe(node, options);
+          node.observers = node.observers || [];
+          node.observers.push(observer);
         });
       },
     },
@@ -885,7 +940,7 @@
           node.module =
             jSite.extend(true, {}, module.prototype,
               {
-                data: jSite(node).dataProp(),
+                data: jSite(node).stub(),
                 isBinded: true,
               },
             );
@@ -901,7 +956,7 @@
 
               if (mutation.type === 'attributes' && node.module) {
                 if (!jSite.isNull(attr)) {
-                  const data = jSite.dataProp([attr]);
+                  const data = jSite.stub([attr]);
 
                   if (!jSite.isEmptyObject(data)) {
                     jSite.md.dataChange(node, data);
