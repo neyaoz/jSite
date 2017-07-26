@@ -657,6 +657,21 @@
     },
 
     fn: {
+      uid: function () {
+        let uid = null;
+
+        this.each(function () {
+          if (!this.uid) {
+            this.uid = Date.now();
+          }
+
+          if (!uid) {
+            uid = this.uid;
+          }
+        });
+
+        return uid;
+      },
       dataProp: function () {
         let data = {};
 
