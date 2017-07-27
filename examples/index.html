@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>jSite</title>
+
+  <script type="text/javascript" src="../src/jquery-3.2.1.js"></script>
+  <script type="text/javascript" src="../src/jsite.js"></script>
+</head>
+<body>
+  <inner js:html="Hello World"></inner>
+
+  <div js="inner log" js:html="Inner log calisti lan."></div>
+
+  <script>
+    jSite.md.extend({
+      inner: function () {
+        this.node.innerHTML = this.data.html;
+      },
+      log: function () {
+        console.log(this.data);
+      }
+    })
+  </script>
+</body>
+</html>

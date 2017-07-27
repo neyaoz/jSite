@@ -624,6 +624,19 @@
       });
     },
 
+    unid: function (obj) {
+      let unid = Date.now();
+
+      if (!jSite.isNull(obj)) {
+        if (!jSite.isNull(obj.unid)) {
+          return obj.unid;
+        }
+
+        obj.unid = unid;
+      }
+
+      return unid;
+    },
     stub: function (attributes) {
       attributes = jSite.toArray(attributes).sort(function (a, b) {
         return a.name.localeCompare(b.name);
@@ -658,19 +671,17 @@
 
     fn: {
       unid: function () {
-        let uid = null;
+        let unid = null;
 
         this.each(function () {
-          if (!this.uid) {
-            this.uid = Date.now();
-          }
+          jSite.unid(this);
 
-          if (!uid) {
-            uid = this.uid;
+          if (jSite.isNull(unid)) {
+            unid = jSite.unid(this);
           }
         });
 
-        return uid;
+        return unid;
       },
       attr: function (name, data) {
         if (jSite.isUndefined(data)) {
@@ -822,6 +833,8 @@
         module =
           jSite.extend(true, {
             data: {},
+            unid: jSite.unid(),
+
             deferred: false,
             isBooted: false,
             isLoaded: false,
@@ -921,23 +934,33 @@
         });
       },
       bindNode: function (node, force) {
-        const module = node.getAttribute('js') || node.getAttribute('data-js') || node.tagName.toLowerCase();
+        let modules = node.getAttribute('js') || node.getAttribute('data-js') || node.tagName;
+        modules = modules.toLowerCase().replace(/^js-/, '').split(' ');
 
-        if (jSite.md.has(module)) {
-          jSite.md.bind(node, module, force);
-        }
+        jSite.each(modules, function (i, module) {
+          if (jSite.md.has(module)) {
+            jSite.md.bind(node, module, force);
+          }
+        });
       },
       bind: function (node, module, force) {
         if (jSite.isString(module)) {
           module = this.get(module);
         }
 
+        const unid = jSite.unid(module);
+
         if (!module.isLoaded) {
           jSite.md.load(module);
         }
 
-        if (!node.module || !node.module.isBinded || node.module.static !== module || force) {
-          node.module =
+        if (!node.md) {
+          node.md = {};
+        }
+
+
+        if (!node.md[unid] || !node.md[unid].isBinded || force) {
+          node.md[unid] =
             jSite.extend(true, {}, module.prototype,
               {
                 data: jSite(node).stub(),
@@ -945,16 +968,16 @@
               },
             );
 
-          node.module.node = node;
-          node.module.static = module;
-          node.module.onBind(node, node.module.data);
+          node.md[unid].node = node;
+          node.md[unid].module = module;
+          node.md[unid].onBind(node, node.md[unid].data);
 
           jSite(node).observe(function (mutations) {
             mutations.forEach(function (mutation) {
               const node = mutation.target;
               const attr = node.getAttributeNode(mutation.attributeName);
 
-              if (mutation.type === 'attributes' && node.module) {
+              if (mutation.type === 'attributes' && node.md[unid] && node.md[unid].isBinded) {
                 if (!jSite.isNull(attr)) {
                   const data = jSite.stub([attr]);
 
