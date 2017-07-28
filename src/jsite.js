@@ -642,31 +642,43 @@
         return a.name.localeCompare(b.name);
       });
 
-      let data = {};
+      let stub = {
+        shared: {},
+        module: {},
+      };
+
       jSite.each(attributes, function (i, attr) {
         const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
 
+        let data;
+        let path;
+
         if (!jSite.isNull(match)) {
           if (match[1]) {
-            // js@ModuleA data-js@ModuleA
+            path = 'module.' + match[1];
+          } else {
+            path = 'shared';
           }
 
           if (match[2]) {
-            jSite.setter(data, jSite.dashUpperFirst(match[2]), jSite.parser(attr.value));
+            path = [path, jSite.dashUpperFirst(match[2])].join('.');
+            data = jSite.parser(attr.value);
           } else {
             // js:="" js@ModuleA:="" data-js:="" data-js@ModuleA:=""
             try {
-              jSite.setter(data, null, JSON.parse(attr.value));
+              data = JSON.parse(attr.value);
             } catch (e) {
               // eslint-disable-next-line no-console
               console.error(attr);
               throw e;
             }
           }
+
+          jSite.setter(stub, path, data);
         }
       });
 
-      return data;
+      return stub;
     },
 
     fn: {
@@ -833,7 +845,7 @@
         module =
           jSite.extend(true, {
             data: {},
-            unid: jSite.unid(),
+            name: jSite.unid(),
 
             deferred: false,
             isBooted: false,
@@ -857,14 +869,18 @@
         jSite.each(modules, function (name, module) {
           // Pure Modules as a function
           if (jSite.isFunction(module)) {
-            module = jSite.md.create({
+            module = {
               prototype: {
                 onBind: module,
               },
-            });
+            };
           }
 
-          module = jSite.extend(true, jSite.md.all[name], module);
+          if (jSite.md.has(name)) {
+            jSite.error('jSite already contains a module named <' + name + '>');
+          }
+
+          module.name = name;
           module = jSite.md.create(module);
 
           jSite.md.put(name, module).boot(name);
@@ -948,8 +964,6 @@
           module = this.get(module);
         }
 
-        const unid = jSite.unid(module);
-
         if (!module.isLoaded) {
           jSite.md.load(module);
         }
@@ -958,26 +972,29 @@
           node.md = {};
         }
 
+        const name = module.name;
+        if (!node.md[name] || !node.md[name].isBinded || force) {
+          const stub = jSite(node).stub();
+          const data = jSite.extend(true, {}, module.data, module.prototype.data, stub.shared, stub.module[name]);
 
-        if (!node.md[unid] || !node.md[unid].isBinded || force) {
-          node.md[unid] =
-            jSite.extend(true, {}, module.prototype,
+          node.md[name] =
+            jSite.extend({}, module.prototype,
               {
-                data: jSite(node).stub(),
-                isBinded: true,
+                data: data,
+                node: node,
+                module: module,
               },
             );
 
-          node.md[unid].node = node;
-          node.md[unid].module = module;
-          node.md[unid].onBind(node, node.md[unid].data);
+          node.md[name].onBind(node, data);
+          node.md[name].isBinded = true;
 
           jSite(node).observe(function (mutations) {
             mutations.forEach(function (mutation) {
               const node = mutation.target;
               const attr = node.getAttributeNode(mutation.attributeName);
 
-              if (mutation.type === 'attributes' && node.md[unid] && node.md[unid].isBinded) {
+              if (mutation.type === 'attributes' && node.md[name] && node.md[name].isBinded) {
                 if (!jSite.isNull(attr)) {
                   const data = jSite.stub([attr]);
 
