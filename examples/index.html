@@ -7,23 +7,63 @@
 
   <title>jSite</title>
 
-  <script type="text/javascript" src="../src/jquery-3.2.1.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/vue"></script>
   <script type="text/javascript" src="../src/jsite.js"></script>
 </head>
 <body>
-  <inner js:html="Hello World"></inner>
+  <div
+    js="vue"
+    js:eval="{tag: this.node.tagName}"
+    js:data.say="Hello World!">
+    <h1>Module Tag {{ tag }}: {{ say }}</h1>
+  </div>
 
-  <div js="inner log" js:html="html normalde bu" js@inner:html="Inner log calisti lan."></div>
+  <div
+    js="vue"
+    js:eval="{tag: this.node.tagName}"
+    js:data.say="Hello World!"
+    js:template="<h1>Module Tag {{ tag }}: {{ say }}</h1>">
+  </div>
+
+  <div
+    js="vue"
+    js:data.say="Hi"
+    js:template="#vue-b-template">
+  </div>
+
+  <div
+    js="vue"
+    js:data.say="Bye"
+    js:template="#vue-b-template">
+  </div>
+
+  <script type="text/x-handlebars-template" id="vue-b-template">
+    <div>
+      <h1>Say, {{ say }} to my Snapchat!</h1>
+      <input v-model="say">
+    </div>
+  </script>
 
   <script>
     jSite.md.extend({
-      inner: function () {
-        this.node.innerHTML = this.data.html;
-      },
-      log: function () {
-        console.log(this.data);
+      'vue': function (node, data) {
+        if (data.eval) {
+          jSite.extend(true, data, {
+            data: new Function('return (' + data.eval + ')').call(this, arguments),
+            eval: null,
+          });
+        }
+
+        this.vue = new Vue(
+          jSite.extend({
+            // defaults
+            template: node.innerHTML,
+          }, data, {
+            el: node,
+          }),
+        );
       }
-    })
+    });
   </script>
 </body>
 </html>

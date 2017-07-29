@@ -648,7 +648,7 @@
       };
 
       jSite.each(attributes, function (i, attr) {
-        const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/ui);
+        const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/i);
 
         let data;
         let path;
@@ -999,7 +999,7 @@
                   const data = jSite.stub([attr]);
 
                   if (!jSite.isEmptyObject(data)) {
-                    jSite.md.dataChange(node, data);
+                    jSite.md.dataChange(node, module, data);
                   }
                 }
               }
@@ -1012,12 +1012,15 @@
           });
         }
       },
-      dataChange: function (node, nextData) {
-        const prevData = node.module.data;
-
-        if (node.module.onDataChange(node, nextData, prevData) !== false) {
-          jSite.extend(true, prevData, nextData);
+      dataChange: function (node, module, stub) {
+        if (jSite.isString(module)) {
+          module = this.get(module);
         }
+
+        const name = module.name;
+        const data = jSite.extend(true, node.md[name].data, stub.shared, stub.module[name]);
+
+        node.md[name].onDataChange(node, data, stub);
       },
 
       all: {},
