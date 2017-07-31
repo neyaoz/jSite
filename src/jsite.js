@@ -111,7 +111,7 @@
     noop: function () {
 
     },
-    eval(code, context) {
+    eval: function (code, context) {
       context = context || document;
 
       const script =
@@ -637,7 +637,7 @@
 
       return unid;
     },
-    stub: function (attributes) {
+    stub: function (attributes, context) {
       attributes = jSite.toArray(attributes).sort(function (a, b) {
         return a.name.localeCompare(b.name);
       });
@@ -648,7 +648,7 @@
       };
 
       jSite.each(attributes, function (i, attr) {
-        const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.+)?$/i);
+        const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.*?)(\((.+)?\)({})?)?$/i);
 
         let data;
         let path;
@@ -662,9 +662,24 @@
 
           if (match[2]) {
             path = [path, jSite.dashUpperFirst(match[2])].join('.');
+          }
+
+          if (match[5]) {
+            try {
+              // eslint-disable-next-line no-new-func
+              data = new Function(match[4], 'return (' + attr.value + ');').call(context, stub);
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.error(attr);
+              throw e;
+            }
+          } else if (match[3]) {
+            // eslint-disable-next-line no-console,no-new-func
+            data = new Function(match[4], attr.value);
+          } else if (match[2]) {
             data = jSite.parser(attr.value);
           } else {
-            // js:="" js@ModuleA:="" data-js:="" data-js@ModuleA:=""
+            // js:="" js@ModuleA:=""
             try {
               data = JSON.parse(attr.value);
             } catch (e) {
@@ -759,7 +774,7 @@
         let data = {};
 
         this.each(function () {
-          jSite.setter(data, null, jSite.stub(this.attributes));
+          jSite.setter(data, null, jSite.stub(this.attributes, this));
         });
 
         return data;
@@ -996,7 +1011,7 @@
 
               if (mutation.type === 'attributes' && node.md[name] && node.md[name].isBinded) {
                 if (!jSite.isNull(attr)) {
-                  const data = jSite.stub([attr]);
+                  const data = jSite.stub([attr], node);
 
                   if (!jSite.isEmptyObject(data)) {
                     jSite.md.dataChange(node, module, data);

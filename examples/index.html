@@ -8,36 +8,31 @@
   <title>jSite</title>
 
   <script type="text/javascript" src="https://unpkg.com/vue"></script>
+  <script type="text/javascript" src="../src/jquery-3.2.1.js"></script>
   <script type="text/javascript" src="../src/jsite.js"></script>
 </head>
 <body>
-  <div
-    js="vue"
-    js:eval="{tag: this.node.tagName}"
-    js:data.say="Hello World!">
-    <h1>Module Tag {{ tag }}: {{ say }}</h1>
-  </div>
-
-  <div
-    js="vue"
-    js:eval="{tag: this.node.tagName}"
+  <vue
     js:data.say="Hello World!"
-    js:template="<h1>Module Tag {{ tag }}: {{ say }}</h1>">
-  </div>
+    js:data.tag(){}="this.tagName"
+    js:methods.logger(e)="console.log(this, e);"
+  >
+    <h1 @click='logger'>Module Tag {{ tag }}: {{ say }}</h1>
+  </vue>
 
   <div
     js="vue"
     js:data.say="Hi"
-    js:template="#vue-b-template">
+    js:template="#vue-template">
   </div>
 
   <div
     js="vue"
-    js:data.say="Bye"
-    js:template="#vue-b-template">
+    js:data.say(){}="Math.round(Math.random() * 100)"
+    js:template="#vue-template">
   </div>
 
-  <script type="text/x-handlebars-template" id="vue-b-template">
+  <script type="text/x-template" id="vue-template">
     <div>
       <h1>Say, {{ say }} to my Snapchat!</h1>
       <input v-model="say">
@@ -46,22 +41,23 @@
 
   <script>
     jSite.md.extend({
-      'vue': function (node, data) {
-        if (data.eval) {
-          jSite.extend(true, data, {
-            data: new Function('return (' + data.eval + ')').call(this, arguments),
-            eval: null,
-          });
-        }
+      'vue': {
+        prototype: {
+          onBind: function (node, data) {
+            const $root = $(node).wrapInner('<div root />').children(':first');
 
-        this.vue = new Vue(
-          jSite.extend({
-            // defaults
-            template: node.innerHTML,
-          }, data, {
-            el: node,
-          }),
-        );
+            this.vue = new Vue(
+              jSite.extend({
+                template: $root.html()
+              }, data, {
+                el: $root.get(0)
+              })
+            );
+          },
+          onDataChange: function (node, data, next) {
+            jSite.extend(true, this.vue, next);
+          }
+        }
       }
     });
   </script>
