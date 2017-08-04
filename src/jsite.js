@@ -637,25 +637,26 @@
 
       return unid;
     },
-    stub: function (attributes, context) {
+    stub: function (attributes, scope, context) {
       attributes = jSite.toArray(attributes).sort(function (a, b) {
         return a.name.localeCompare(b.name);
       });
 
       let stub = {
         shared: {},
-        module: {},
+        scoped: {},
       };
 
       jSite.each(attributes, function (i, attr) {
-        const match = attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.*?)(\((.+)?\)({})?)?$/i);
+        const match =
+          attr.name.match(/^(?:(?:data-)?js(?:@(?:js-)?(.+))?):(.*?)(\((.+)?\)({})?)?$/i);
 
         let data;
         let path;
 
         if (!jSite.isNull(match)) {
           if (match[1]) {
-            path = 'module.' + match[1];
+            path = 'scoped.' + match[1];
           } else {
             path = 'shared';
           }
@@ -679,7 +680,7 @@
           } else if (match[2]) {
             data = jSite.parser(attr.value);
           } else {
-            // js:="" js@ModuleA:=""
+            // js:="" js@ScopeA:=""
             try {
               data = JSON.parse(attr.value);
             } catch (e) {
@@ -692,6 +693,10 @@
           jSite.setter(stub, path, data);
         }
       });
+
+      if (scope) {
+        stub = jSite.extend(true, {}, stub.shared, stub.scoped[scope]);
+      }
 
       return stub;
     },
@@ -770,11 +775,12 @@
 
         return this;
       },
-      stub: function () {
+      stub: function (scope, context) {
         let data = {};
 
         this.each(function () {
-          jSite.setter(data, null, jSite.stub(this.attributes, this));
+          let stub = jSite.stub(this.attributes, scope, context || this);
+          jSite.setter(data, null, stub);
         });
 
         return data;
@@ -801,7 +807,7 @@
         return this.each(function () {
           const node = this;
           const observer = new MutationObserver(function () {
-            callback.apply(node, jSite.toArray(arguments));
+            callback.apply(node, arguments);
           });
 
           observer.observe(node, options);
@@ -906,8 +912,6 @@
 
       init: function () {
         jSite.ready(function () {
-          jSite.md.bindContext();
-
           jSite(document).observe(function (mutations) {
             mutations.forEach(function (mutation) {
               const nodeMap = jSite.toArray(mutation.addedNodes);
@@ -926,6 +930,8 @@
             characterData: false,
             characterDataOldValue: false,
           });
+
+          jSite.md.bindContext();
         });
       },
       boot: function (module, force) {
@@ -989,8 +995,8 @@
 
         const name = module.name;
         if (!node.md[name] || !node.md[name].isBinded || force) {
-          const stub = jSite(node).stub();
-          const data = jSite.extend(true, {}, module.data, module.prototype.data, stub.shared, stub.module[name]);
+          const stub = jSite(node).stub(name);
+          const data = jSite.extend(true, {}, module.data, module.prototype.data, stub);
 
           node.md[name] =
             jSite.extend({}, module.prototype,
@@ -1011,7 +1017,7 @@
 
               if (mutation.type === 'attributes' && node.md[name] && node.md[name].isBinded) {
                 if (!jSite.isNull(attr)) {
-                  const data = jSite.stub([attr], node);
+                  const data = jSite.stub([attr], name, node);
 
                   if (!jSite.isEmptyObject(data)) {
                     jSite.md.dataChange(node, module, data);
