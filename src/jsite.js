@@ -666,6 +666,7 @@
           }
 
           if (match[5]) {
+            // js:(){}="" js:foo(){}="" js:scopeA@foo(){}=""
             try {
               // eslint-disable-next-line no-new-func
               data = new Function(match[4], 'return (' + attr.value + ');').call(context, stub);
@@ -675,9 +676,11 @@
               throw e;
             }
           } else if (match[3]) {
+            // js:foo()="" js:foo(a,b)="" js@scopeA:foo()="" js@scopeA:foo(a,b)=""
             // eslint-disable-next-line no-console,no-new-func
             data = new Function(match[4], attr.value);
           } else if (match[2]) {
+            // js:foo="" js:foo.bar="" js@scopeA:foo="" js@scopeA:foo.bar=""
             data = jSite.parser(attr.value);
           } else {
             // js:="" js@ScopeA:=""
@@ -996,18 +999,16 @@
         const name = module.name;
         if (!node.md[name] || !node.md[name].isBinded || force) {
           const stub = jSite(node).stub(name);
-          const data = jSite.extend(true, {}, module.data, module.prototype.data, stub);
 
           node.md[name] =
             jSite.extend({}, module.prototype,
               {
-                data: data,
                 node: node,
                 module: module,
               },
             );
 
-          node.md[name].onBind(node, data);
+          node.md[name].onBind(node, stub);
           node.md[name].isBinded = true;
 
           jSite(node).observe(function (mutations) {
@@ -1017,10 +1018,10 @@
 
               if (mutation.type === 'attributes' && node.md[name] && node.md[name].isBinded) {
                 if (!jSite.isNull(attr)) {
-                  const data = jSite.stub([attr], name, node);
+                  const stub = jSite.stub([attr], name, node);
 
-                  if (!jSite.isEmptyObject(data)) {
-                    jSite.md.dataChange(node, module, data);
+                  if (!jSite.isEmptyObject(stub)) {
+                    jSite.md.dataChange(node, module, stub);
                   }
                 }
               }
